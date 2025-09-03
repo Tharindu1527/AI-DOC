@@ -1,122 +1,145 @@
-from datetime import datetime, time
-from typing import Optional, List
-from pydantic import BaseModel, Field, EmailStr
-from bson import ObjectId
+from datetime import datetime
+from typing import List, Optional
+from fastapi import APIRouter, HTTPException, Query
+from models.doctor import DoctorCreate, DoctorUpdate, DoctorResponse
+from services.doctor_service import doctor_service
+import logging
 
-class PyObjectId(ObjectId):
-    @classmethod
-    def __get_validators__(cls):
-        yield cls.validate
+logger = logging.getLogger(__name__)
 
-    @classmethod
-    def validate(cls, v):
-        if not ObjectId.is_valid(v):
-            raise ValueError("Invalid objectid")
-        return ObjectId(v)
+router = APIRouter(prefix="/doctors", tags=["doctors"])
 
-    @classmethod
-    def __get_pydantic_json_schema__(cls, field_schema):
-        field_schema.update(type="string")
+# ==== SPECIFIC ROUTES FIRST ====
+@router.get("/statistics", response_model=dict)  # Removed trailing slash
+async def get_doctor_statistics():
+    """Get doctor statistics for dashboard"""
+    try:
+        result = await doctor_service.get_doctor_statistics()
+        return result
+    except Exception as e:
+        logger.error(f"Error getting doctor statistics: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get doctor statistics")
 
-class WorkingHours(BaseModel):
-    day: str = Field(..., description="Day of the week")
-    start_time: time = Field(..., description="Start time")
-    end_time: time = Field(..., description="End time")
-    is_available: bool = Field(default=True, description="Whether doctor is available on this day")
+@router.get("/search", response_model=List[DoctorResponse])  # Removed trailing slash
+async def search_doctors(
+    q: str = Query("", description="Search query"),
+    specialty: Optional[str] = Query(None, description="Filter by specialty"),
+    department: Optional[str] = Query(None, description="Filter by department"),
+    min_experience: Optional[int] = Query(None, description="Minimum years of experience"),
+    is_available: Optional[bool] = Query(None, description="Filter by availability"),
+    is_active: Optional[bool] = Query(None, description="Filter by active status")
+):
+    """Search doctors with filters"""
+    try:
+        filters = {}
+        if specialty:
+            filters['specialty'] = specialty
+        if department:
+            filters['department'] = department
+        if min_experience is not None:
+            filters['min_experience'] = min_experience
+        if is_available is not None:
+            filters['is_available'] = is_available
+        if is_active is not None:
+            filters['is_active'] = is_active
+            
+        result = await doctor_service.search_doctors(query=q, filters=filters)
+        return result
+    except Exception as e:
+        logger.error(f"Error searching doctors: {e}")
+        raise HTTPException(status_code=500, detail="Failed to search doctors")
 
-class DoctorBase(BaseModel):
-    first_name: str = Field(..., description="Doctor's first name")
-    last_name: str = Field(..., description="Doctor's last name")
-    title: str = Field(default="Dr.", description="Doctor's title (Dr., Prof., etc.)")
-    specialty: str = Field(..., description="Doctor's medical specialty")
-    department: Optional[str] = Field(None, description="Department or clinic")
-    email: Optional[EmailStr] = Field(None, description="Doctor's email address")
-    phone: Optional[str] = Field(None, description="Doctor's phone number")
-    office_location: Optional[str] = Field(None, description="Office location or room number")
-    education: Optional[List[str]] = Field(default_factory=list, description="Educational background")
-    certifications: Optional[List[str]] = Field(default_factory=list, description="Medical certifications")
-    years_experience: Optional[int] = Field(None, description="Years of medical experience")
-    languages: Optional[List[str]] = Field(default_factory=list, description="Languages spoken")
-    bio: Optional[str] = Field(None, description="Doctor's biography")
-    consultation_fee: Optional[float] = Field(None, description="Consultation fee")
-    working_hours: Optional[List[WorkingHours]] = Field(default_factory=list, description="Weekly working hours")
-    is_available: bool = Field(default=True, description="Whether doctor is currently available for appointments")
-    is_active: bool = Field(default=True, description="Whether doctor is active in the system")
-    rating: Optional[float] = Field(None, description="Doctor's average rating")
-    total_reviews: int = Field(default=0, description="Total number of reviews")
+@router.get("/available", response_model=List[DoctorResponse])  # Removed trailing slash
+async def get_available_doctors(
+    specialty: Optional[str] = Query(None, description="Filter by specialty")
+):
+    """Get available doctors, optionally filtered by specialty"""
+    try:
+        result = await doctor_service.get_available_doctors(specialty=specialty)
+        return result
+    except Exception as e:
+        logger.error(f"Error getting available doctors: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get available doctors")
 
-class DoctorCreate(DoctorBase):
-    pass
+@router.get("/find/by-name", response_model=DoctorResponse)
+async def find_doctor_by_name(
+    name: str = Query(..., description="Doctor name")
+):
+    """Find doctor by name (for voice appointments)"""
+    try:
+        result = await doctor_service.get_doctor_by_name(name)
+        if not result:
+            raise HTTPException(status_code=404, detail="Doctor not found")
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error finding doctor: {e}")
+        raise HTTPException(status_code=500, detail="Failed to find doctor")
 
-class DoctorUpdate(BaseModel):
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
-    title: Optional[str] = None
-    specialty: Optional[str] = None
-    department: Optional[str] = None
-    email: Optional[EmailStr] = None
-    phone: Optional[str] = None
-    office_location: Optional[str] = None
-    education: Optional[List[str]] = None
-    certifications: Optional[List[str]] = None
-    years_experience: Optional[int] = None
-    languages: Optional[List[str]] = None
-    bio: Optional[str] = None
-    consultation_fee: Optional[float] = None
-    working_hours: Optional[List[WorkingHours]] = None
-    is_available: Optional[bool] = None
-    is_active: Optional[bool] = None
-    rating: Optional[float] = None
-    total_reviews: Optional[int] = None
+@router.get("/", response_model=List[DoctorResponse])
+async def get_all_doctors(
+    skip: int = Query(0, ge=0, description="Number of records to skip"),
+    limit: int = Query(100, ge=1, le=1000, description="Number of records to return"),
+    active_only: bool = Query(True, description="Return only active doctors")
+):
+    """Get all doctors with pagination"""
+    try:
+        result = await doctor_service.get_all_doctors(skip=skip, limit=limit, active_only=active_only)
+        return result
+    except Exception as e:
+        logger.error(f"Error getting doctors: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get doctors")
 
-class Doctor(DoctorBase):
-    id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
-    doctor_id: str = Field(..., description="Unique doctor identifier")
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+@router.post("/", response_model=DoctorResponse)
+async def create_doctor(doctor: DoctorCreate):
+    """Create a new doctor"""
+    try:
+        result = await doctor_service.create_doctor(doctor)
+        return result
+    except Exception as e:
+        logger.error(f"Error creating doctor: {e}")
+        raise HTTPException(status_code=500, detail="Failed to create doctor")
 
-    @property
-    def full_name(self) -> str:
-        return f"{self.title} {self.first_name} {self.last_name}"
+# ==== PARAMETERIZED ROUTES LAST ====
+@router.get("/{doctor_id}", response_model=DoctorResponse)
+async def get_doctor(doctor_id: str):
+    """Get doctor by ID"""
+    try:
+        result = await doctor_service.get_doctor(doctor_id)
+        if not result:
+            raise HTTPException(status_code=404, detail="Doctor not found")
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting doctor: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get doctor")
 
-    @property
-    def display_name(self) -> str:
-        return f"{self.title} {self.last_name}"
+@router.put("/{doctor_id}", response_model=DoctorResponse)
+async def update_doctor(doctor_id: str, update_data: DoctorUpdate):
+    """Update a doctor"""
+    try:
+        result = await doctor_service.update_doctor(doctor_id, update_data)
+        if not result:
+            raise HTTPException(status_code=404, detail="Doctor not found")
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating doctor: {e}")
+        raise HTTPException(status_code=500, detail="Failed to update doctor")
 
-    class Config:
-        populate_by_name = True
-        arbitrary_types_allowed = True
-        json_encoders = {ObjectId: str}
-
-class DoctorResponse(BaseModel):
-    id: str
-    doctor_id: str
-    first_name: str
-    last_name: str
-    title: str
-    specialty: str
-    department: Optional[str]
-    email: Optional[str]
-    phone: Optional[str]
-    office_location: Optional[str]
-    education: Optional[List[str]]
-    certifications: Optional[List[str]]
-    years_experience: Optional[int]
-    languages: Optional[List[str]]
-    bio: Optional[str]
-    consultation_fee: Optional[float]
-    working_hours: Optional[List[WorkingHours]]
-    is_available: bool
-    is_active: bool
-    rating: Optional[float]
-    total_reviews: int
-    created_at: datetime
-    updated_at: datetime
-    
-    @property
-    def full_name(self) -> str:
-        return f"{self.title} {self.first_name} {self.last_name}"
-    
-    @property
-    def display_name(self) -> str:
-        return f"{self.title} {self.last_name}"
+@router.delete("/{doctor_id}")
+async def deactivate_doctor(doctor_id: str):
+    """Deactivate a doctor (soft delete)"""
+    try:
+        success = await doctor_service.deactivate_doctor(doctor_id)
+        if not success:
+            raise HTTPException(status_code=404, detail="Doctor not found")
+        return {"message": "Doctor deactivated successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deactivating doctor: {e}")
+        raise HTTPException(status_code=500, detail="Failed to deactivate doctor")

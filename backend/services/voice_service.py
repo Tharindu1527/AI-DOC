@@ -5,21 +5,29 @@ from datetime import datetime, timedelta
 from typing import AsyncGenerator, Dict, Any, Optional
 import google.generativeai as genai
 from deepgram import Deepgram
+
+# Enhanced ElevenLabs import handling with multiple fallbacks
+ELEVENLABS_AVAILABLE = False
+generate = None
+set_api_key = None
+ElevenLabs = None
+
 try:
     from elevenlabs import generate, set_api_key
+    ELEVENLABS_AVAILABLE = True
+    print("✓ ElevenLabs classic API loaded")
 except ImportError:
-    # Try alternative imports for different elevenlabs versions
     try:
         from elevenlabs.client import ElevenLabs
         from elevenlabs import play, stream, save
-        set_api_key = None
+        ELEVENLABS_AVAILABLE = True
         generate = None
+        set_api_key = None
+        print("✓ ElevenLabs new API loaded")
     except ImportError:
-        # If ElevenLabs is not available, create dummy functions
-        ElevenLabs = None
-        set_api_key = lambda x: None
-        generate = lambda *args, **kwargs: b""
-import httpx
+        print("⚠️  ElevenLabs not available. Text-to-speech will be disabled.")
+        ELEVENLABS_AVAILABLE = False
+
 from config import settings
 import logging
 import re
@@ -27,14 +35,39 @@ import re
 logger = logging.getLogger(__name__)
 
 # Configure APIs
-genai.configure(api_key=settings.gemini_api_key)
-if set_api_key:
+if settings.gemini_api_key:
+    genai.configure(api_key=settings.gemini_api_key)
+else:
+    logger.warning("Gemini API key not provided")
+
+if ELEVENLABS_AVAILABLE and set_api_key and settings.elevenlabs_api_key:
     set_api_key(settings.elevenlabs_api_key)
 
 class VoiceService:
     def __init__(self):
-        self.deepgram = Deepgram(settings.deepgram_api_key)
-        self.gemini_model = genai.GenerativeModel('gemini-1.5-flash')
+        # Initialize Deepgram
+        if settings.deepgram_api_key:
+            self.deepgram = Deepgram(settings.deepgram_api_key)
+        else:
+            logger.warning("Deepgram API key not provided")
+            self.deepgram = None
+        
+        # Initialize Gemini
+        if settings.gemini_api_key:
+            self.gemini_model = genai.GenerativeModel('gemini-1.5-flash')
+        else:
+            logger.warning("Gemini API key not provided")
+            self.gemini_model = None
+        
+        # Initialize ElevenLabs client for new API
+        self.elevenlabs_client = None
+        if ELEVENLABS_AVAILABLE and not generate and settings.elevenlabs_api_key:
+            try:
+                self.elevenlabs_client = ElevenLabs(api_key=settings.elevenlabs_api_key)
+                print("✓ ElevenLabs client initialized")
+            except Exception as e:
+                logger.warning(f"Could not initialize ElevenLabs client: {e}")
+        
         self.conversation_context = []
         self.available_doctors = [
             "Dr. Smith", "Dr. Johnson", "Dr. Williams", "Dr. Brown", 
@@ -48,13 +81,16 @@ class VoiceService:
 
     async def transcribe_audio(self, audio_data: bytes) -> str:
         """Transcribe audio using Deepgram with enhanced error handling"""
+        if not self.deepgram:
+            raise Exception("Deepgram not initialized - check API key")
+        
         try:
             response = await self.deepgram.transcription.prerecorded(
                 {'buffer': audio_data, 'mimetype': 'audio/wav'},
                 {
                     'punctuate': True, 
                     'language': 'en',
-                    'model': 'nova-2',
+                    'model': settings.deepgram_model,
                     'smart_format': True,
                     'diarize': False
                 }
@@ -73,6 +109,9 @@ class VoiceService:
 
     async def generate_response(self, transcript: str) -> Dict[str, Any]:
         """Generate AI response using Gemini with enhanced medical context"""
+        if not self.gemini_model:
+            raise Exception("Gemini not initialized - check API key")
+        
         try:
             # Add conversation context
             context = "\n".join([f"User: {item['user']}\nAI: {item['ai']}" for item in self.conversation_context[-3:]])
@@ -124,7 +163,8 @@ Respond professionally and helpfully."""
                 'intent': intent_data.get('intent', 'general'),
                 'entities': intent_data.get('entities', {}),
                 'confidence': intent_data.get('confidence', 0.5),
-                'suggestions': intent_data.get('suggestions', [])
+                'suggestions': intent_data.get('suggestions', []),
+                'urgency': intent_data.get('urgency', 'low')
             }
             
         except Exception as e:
@@ -149,6 +189,15 @@ Respond professionally and helpfully."""
 
     async def extract_intent(self, user_text: str, ai_response: str = "") -> Dict[str, Any]:
         """Extract intent and entities with enhanced accuracy"""
+        if not self.gemini_model:
+            return {
+                'intent': 'general',
+                'entities': {},
+                'confidence': 0.3,
+                'suggestions': [],
+                'urgency': 'low'
+            }
+        
         try:
             intent_prompt = f"""
             Analyze this conversation for medical appointment management:
@@ -233,26 +282,46 @@ Respond professionally and helpfully."""
             }
 
     async def text_to_speech(self, text: str) -> bytes:
-        """Convert text to speech with enhanced settings"""
+        """Convert text to speech with enhanced fallback handling"""
+        if not ELEVENLABS_AVAILABLE:
+            logger.warning("ElevenLabs not available, returning empty audio")
+            return b""
+        
+        if not settings.elevenlabs_api_key:
+            logger.warning("ElevenLabs API key not provided, returning empty audio")
+            return b""
+        
         try:
             # Clean text for better speech synthesis
             clean_text = self._clean_text_for_speech(text)
             
             if generate:
+                # Classic API
                 audio = generate(
                     text=clean_text,
                     voice=settings.elevenlabs_voice_id,
                     model="eleven_monolingual_v1"
                 )
-                return audio
+                return audio if isinstance(audio, bytes) else b""
+            elif self.elevenlabs_client:
+                # New API
+                try:
+                    audio = self.elevenlabs_client.generate(
+                        text=clean_text,
+                        voice=settings.elevenlabs_voice_id,
+                        model="eleven_monolingual_v1"
+                    )
+                    return audio if isinstance(audio, bytes) else b""
+                except Exception as e:
+                    logger.error(f"ElevenLabs new API error: {e}")
+                    return b""
             else:
-                # Return empty bytes if ElevenLabs is not available
-                logger.warning("ElevenLabs not available, returning empty audio")
+                logger.warning("No ElevenLabs method available")
                 return b""
-            
+                
         except Exception as e:
             logger.error(f"ElevenLabs TTS error: {str(e)}")
-            raise Exception(f"Text-to-speech conversion failed: {str(e)}")
+            return b""  # Return empty audio instead of raising exception
     
     def _clean_text_for_speech(self, text: str) -> str:
         """Clean text for better speech synthesis"""
@@ -278,16 +347,29 @@ Respond professionally and helpfully."""
     async def process_voice_input(self, audio_data: bytes) -> Dict[str, Any]:
         """Complete voice processing pipeline with enhanced error handling"""
         try:
-            # Transcribe
-            transcript = await self.transcribe_audio(audio_data)
-            if not transcript.strip():
+            # Handle empty audio
+            if not audio_data or len(audio_data) == 0:
                 return {
                     'transcript': '',
                     'response': 'I couldn\'t hear you clearly. Could you please speak a bit louder or closer to the microphone?',
                     'audio': None,
                     'intent': 'general',
                     'entities': {},
-                    'suggestions': ['Try speaking more clearly', 'Check your microphone']
+                    'suggestions': ['Try speaking more clearly', 'Check your microphone'],
+                    'urgency': 'low'
+                }
+            
+            # Transcribe
+            transcript = await self.transcribe_audio(audio_data)
+            if not transcript.strip():
+                return {
+                    'transcript': '',
+                    'response': 'I couldn\'t understand what you said. Please try speaking more clearly.',
+                    'audio': None,
+                    'intent': 'general',
+                    'entities': {},
+                    'suggestions': ['Speak more clearly', 'Check microphone volume'],
+                    'urgency': 'low'
                 }
             
             logger.info(f"Transcribed: {transcript}")
@@ -296,9 +378,11 @@ Respond professionally and helpfully."""
             ai_data = await self.generate_response(transcript)
             
             # Generate speech
+            audio_b64 = None
             try:
                 audio = await self.text_to_speech(ai_data['response'])
-                audio_b64 = base64.b64encode(audio).decode('utf-8')
+                if audio:
+                    audio_b64 = base64.b64encode(audio).decode('utf-8')
             except Exception as tts_error:
                 logger.error(f"TTS failed: {tts_error}")
                 audio_b64 = None
@@ -320,7 +404,7 @@ Respond professionally and helpfully."""
             
             try:
                 error_audio = await self.text_to_speech(error_response)
-                error_audio_b64 = base64.b64encode(error_audio).decode('utf-8')
+                error_audio_b64 = base64.b64encode(error_audio).decode('utf-8') if error_audio else None
             except:
                 error_audio_b64 = None
             
@@ -331,7 +415,8 @@ Respond professionally and helpfully."""
                 'intent': 'error',
                 'entities': {},
                 'error': str(e),
-                'suggestions': ['Try again', 'Contact office directly', 'Check internet connection']
+                'suggestions': ['Try again', 'Contact office directly', 'Check internet connection'],
+                'urgency': 'low'
             }
 
     async def process_audio_stream(self, audio_data: bytes) -> Dict[str, Any]:
@@ -345,25 +430,10 @@ Respond professionally and helpfully."""
                 "extracted_info": result['entities']
             },
             "audio_response": result['audio'],
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.utcnow().isoformat(),
+            "suggestions": result.get('suggestions', []),
+            "urgency": result.get('urgency', 'low')
         }
-
-    async def process_realtime_audio(self, websocket) -> AsyncGenerator[Dict[str, Any], None]:
-        """Process real-time audio stream"""
-        try:
-            while True:
-                # Receive audio data from WebSocket
-                audio_data = await websocket.receive_bytes()
-                
-                # Process through voice pipeline
-                result = await self.process_audio_stream(audio_data)
-                
-                # Yield result
-                yield result
-                
-        except Exception as e:
-            logger.error(f"Real-time audio processing error: {e}")
-            yield {"error": str(e)}
 
     def reset_conversation(self):
         """Reset conversation context"""
@@ -373,6 +443,25 @@ Respond professionally and helpfully."""
     def get_conversation_history(self) -> list:
         """Get current conversation history"""
         return self.conversation_context.copy()
+
+    def health_check(self) -> Dict[str, Any]:
+        """Check health of all voice service components"""
+        health = {
+            "deepgram": "unavailable",
+            "gemini": "unavailable", 
+            "elevenlabs": "unavailable"
+        }
+        
+        if self.deepgram and settings.deepgram_api_key:
+            health["deepgram"] = "available"
+        
+        if self.gemini_model and settings.gemini_api_key:
+            health["gemini"] = "available"
+            
+        if ELEVENLABS_AVAILABLE and settings.elevenlabs_api_key:
+            health["elevenlabs"] = "available"
+        
+        return health
 
 # Global instance
 voice_service = VoiceService()

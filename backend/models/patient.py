@@ -1,122 +1,134 @@
 from datetime import datetime
-from typing import Optional, List
-from pydantic import BaseModel, Field, EmailStr
-from bson import ObjectId
+from typing import List, Optional
+from fastapi import APIRouter, HTTPException, Query
+from models.patient import PatientCreate, PatientUpdate, PatientResponse
+from services.patient_service import patient_service
+import logging
 
-class PyObjectId(ObjectId):
-    @classmethod
-    def __get_validators__(cls):
-        yield cls.validate
+logger = logging.getLogger(__name__)
 
-    @classmethod
-    def validate(cls, v):
-        if not ObjectId.is_valid(v):
-            raise ValueError("Invalid objectid")
-        return ObjectId(v)
+router = APIRouter(prefix="/patients", tags=["patients"])
 
-    @classmethod
-    def __get_pydantic_json_schema__(cls, field_schema):
-        field_schema.update(type="string")
+# ==== SPECIFIC ROUTES FIRST ====
+@router.get("/statistics", response_model=dict)  # Removed trailing slash
+async def get_patient_statistics():
+    """Get patient statistics for dashboard"""
+    try:
+        result = await patient_service.get_patient_statistics()
+        return result
+    except Exception as e:
+        logger.error(f"Error getting patient statistics: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get patient statistics")
 
-class PatientBase(BaseModel):
-    first_name: str = Field(..., description="Patient's first name")
-    last_name: str = Field(..., description="Patient's last name")
-    email: Optional[EmailStr] = Field(None, description="Patient's email address")
-    phone: Optional[str] = Field(None, description="Patient's phone number")
-    date_of_birth: Optional[datetime] = Field(None, description="Patient's date of birth")
-    gender: Optional[str] = Field(None, description="Patient's gender")
-    address: Optional[str] = Field(None, description="Patient's address")
-    city: Optional[str] = Field(None, description="Patient's city")
-    state: Optional[str] = Field(None, description="Patient's state")
-    zip_code: Optional[str] = Field(None, description="Patient's ZIP code")
-    emergency_contact_name: Optional[str] = Field(None, description="Emergency contact name")
-    emergency_contact_phone: Optional[str] = Field(None, description="Emergency contact phone")
-    medical_history: Optional[List[str]] = Field(default_factory=list, description="Medical history")
-    allergies: Optional[List[str]] = Field(default_factory=list, description="Known allergies")
-    medications: Optional[List[str]] = Field(default_factory=list, description="Current medications")
-    insurance_provider: Optional[str] = Field(None, description="Insurance provider")
-    insurance_id: Optional[str] = Field(None, description="Insurance ID number")
-    notes: Optional[str] = Field(None, description="Additional notes")
-    is_active: bool = Field(default=True, description="Whether patient is active")
+@router.get("/search", response_model=List[PatientResponse])  # Removed trailing slash
+async def search_patients(
+    q: str = Query("", description="Search query"),
+    gender: Optional[str] = Query(None, description="Filter by gender"),
+    age_min: Optional[int] = Query(None, description="Minimum age"),
+    age_max: Optional[int] = Query(None, description="Maximum age"),
+    is_active: Optional[bool] = Query(None, description="Filter by active status")
+):
+    """Search patients with filters"""
+    try:
+        filters = {}
+        if gender:
+            filters['gender'] = gender
+        if age_min is not None:
+            filters['age_min'] = age_min
+        if age_max is not None:
+            filters['age_max'] = age_max
+        if is_active is not None:
+            filters['is_active'] = is_active
+            
+        result = await patient_service.search_patients(query=q, filters=filters)
+        return result
+    except Exception as e:
+        logger.error(f"Error searching patients: {e}")
+        raise HTTPException(status_code=500, detail="Failed to search patients")
 
-class PatientCreate(PatientBase):
-    pass
+@router.get("/find/by-name-phone", response_model=PatientResponse)
+async def find_patient_by_name_phone(
+    name: Optional[str] = Query(None, description="Patient name"),
+    phone: Optional[str] = Query(None, description="Patient phone number")
+):
+    """Find patient by name or phone (for voice appointments)"""
+    try:
+        if not name and not phone:
+            raise HTTPException(status_code=400, detail="Either name or phone is required")
+            
+        result = await patient_service.get_patient_by_name_phone(name=name, phone=phone)
+        if not result:
+            raise HTTPException(status_code=404, detail="Patient not found")
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error finding patient: {e}")
+        raise HTTPException(status_code=500, detail="Failed to find patient")
 
-class PatientUpdate(BaseModel):
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
-    email: Optional[EmailStr] = None
-    phone: Optional[str] = None
-    date_of_birth: Optional[datetime] = None
-    gender: Optional[str] = None
-    address: Optional[str] = None
-    city: Optional[str] = None
-    state: Optional[str] = None
-    zip_code: Optional[str] = None
-    emergency_contact_name: Optional[str] = None
-    emergency_contact_phone: Optional[str] = None
-    medical_history: Optional[List[str]] = None
-    allergies: Optional[List[str]] = None
-    medications: Optional[List[str]] = None
-    insurance_provider: Optional[str] = None
-    insurance_id: Optional[str] = None
-    notes: Optional[str] = None
-    is_active: Optional[bool] = None
+@router.get("/", response_model=List[PatientResponse])
+async def get_all_patients(
+    skip: int = Query(0, ge=0, description="Number of records to skip"),
+    limit: int = Query(100, ge=1, le=1000, description="Number of records to return"),
+    active_only: bool = Query(True, description="Return only active patients")
+):
+    """Get all patients with pagination"""
+    try:
+        result = await patient_service.get_all_patients(skip=skip, limit=limit, active_only=active_only)
+        return result
+    except Exception as e:
+        logger.error(f"Error getting patients: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get patients")
 
-class Patient(PatientBase):
-    id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
-    patient_id: str = Field(..., description="Unique patient identifier")
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+@router.post("/", response_model=PatientResponse)
+async def create_patient(patient: PatientCreate):
+    """Create a new patient"""
+    try:
+        result = await patient_service.create_patient(patient)
+        return result
+    except Exception as e:
+        logger.error(f"Error creating patient: {e}")
+        raise HTTPException(status_code=500, detail="Failed to create patient")
 
-    @property
-    def full_name(self) -> str:
-        return f"{self.first_name} {self.last_name}"
+# ==== PARAMETERIZED ROUTES LAST ====
+@router.get("/{patient_id}", response_model=PatientResponse)
+async def get_patient(patient_id: str):
+    """Get patient by ID"""
+    try:
+        result = await patient_service.get_patient(patient_id)
+        if not result:
+            raise HTTPException(status_code=404, detail="Patient not found")
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting patient: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get patient")
 
-    @property
-    def age(self) -> Optional[int]:
-        if self.date_of_birth:
-            today = datetime.now()
-            return today.year - self.date_of_birth.year - ((today.month, today.day) < (self.date_of_birth.month, self.date_of_birth.day))
-        return None
+@router.put("/{patient_id}", response_model=PatientResponse)
+async def update_patient(patient_id: str, update_data: PatientUpdate):
+    """Update a patient"""
+    try:
+        result = await patient_service.update_patient(patient_id, update_data)
+        if not result:
+            raise HTTPException(status_code=404, detail="Patient not found")
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating patient: {e}")
+        raise HTTPException(status_code=500, detail="Failed to update patient")
 
-    class Config:
-        populate_by_name = True
-        arbitrary_types_allowed = True
-        json_encoders = {ObjectId: str}
-
-class PatientResponse(BaseModel):
-    id: str
-    patient_id: str
-    first_name: str
-    last_name: str
-    email: Optional[str]
-    phone: Optional[str]
-    date_of_birth: Optional[datetime]
-    gender: Optional[str]
-    address: Optional[str]
-    city: Optional[str]
-    state: Optional[str]
-    zip_code: Optional[str]
-    emergency_contact_name: Optional[str]
-    emergency_contact_phone: Optional[str]
-    medical_history: Optional[List[str]]
-    allergies: Optional[List[str]]
-    medications: Optional[List[str]]
-    insurance_provider: Optional[str]
-    insurance_id: Optional[str]
-    notes: Optional[str]
-    is_active: bool
-    created_at: datetime
-    updated_at: datetime
-    
-    @property
-    def full_name(self) -> str:
-        return f"{self.first_name} {self.last_name}"
-    
-    @property
-    def age(self) -> Optional[int]:
-        if self.date_of_birth:
-            today = datetime.now()
-            return today.year - self.date_of_birth.year - ((today.month, today.day) < (self.date_of_birth.month, self.date_of_birth.day))
-        return None
+@router.delete("/{patient_id}")
+async def deactivate_patient(patient_id: str):
+    """Deactivate a patient (soft delete)"""
+    try:
+        success = await patient_service.deactivate_patient(patient_id)
+        if not success:
+            raise HTTPException(status_code=404, detail="Patient not found")
+        return {"message": "Patient deactivated successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deactivating patient: {e}")
+        raise HTTPException(status_code=500, detail="Failed to deactivate patient")

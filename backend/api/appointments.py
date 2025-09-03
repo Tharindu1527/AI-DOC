@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/appointments", tags=["appointments"])
 
+# SPECIFIC ROUTES FIRST - before parameterized routes
 @router.get("/statistics/", response_model=dict)
 async def get_appointment_statistics():
     """Get appointment statistics for dashboard"""
@@ -19,6 +20,32 @@ async def get_appointment_statistics():
     except Exception as e:
         logger.error(f"Error getting appointment statistics: {e}")
         raise HTTPException(status_code=500, detail="Failed to get appointment statistics")
+
+@router.get("/search/", response_model=List[AppointmentResponse])
+async def search_appointments(
+    q: str = Query("", description="Search query"),
+    status: Optional[str] = Query(None, description="Filter by status"),
+    doctor: Optional[str] = Query(None, description="Filter by doctor"),
+    date_from: Optional[date] = Query(None, description="Filter from date (YYYY-MM-DD)"),
+    date_to: Optional[date] = Query(None, description="Filter to date (YYYY-MM-DD)")
+):
+    """Search appointments with filters"""
+    try:
+        filters = {}
+        if status:
+            filters['status'] = status
+        if doctor:
+            filters['doctor'] = doctor
+        if date_from:
+            filters['date_from'] = datetime.combine(date_from, datetime.min.time())
+        if date_to:
+            filters['date_to'] = datetime.combine(date_to, datetime.max.time())
+            
+        result = await appointment_service.search_appointments(query=q, filters=filters)
+        return result
+    except Exception as e:
+        logger.error(f"Error searching appointments: {e}")
+        raise HTTPException(status_code=500, detail="Failed to search appointments")
 
 @router.get("/all/", response_model=List[AppointmentResponse])
 async def get_all_appointments(
@@ -48,32 +75,6 @@ async def get_all_appointments(
         logger.error(f"Error getting all appointments: {e}")
         raise HTTPException(status_code=500, detail="Failed to get appointments")
 
-@router.get("/search/", response_model=List[AppointmentResponse])
-async def search_appointments(
-    q: str = Query("", description="Search query"),
-    status: Optional[str] = Query(None, description="Filter by status"),
-    doctor: Optional[str] = Query(None, description="Filter by doctor"),
-    date_from: Optional[date] = Query(None, description="Filter from date (YYYY-MM-DD)"),
-    date_to: Optional[date] = Query(None, description="Filter to date (YYYY-MM-DD)")
-):
-    """Search appointments with filters"""
-    try:
-        filters = {}
-        if status:
-            filters['status'] = status
-        if doctor:
-            filters['doctor'] = doctor
-        if date_from:
-            filters['date_from'] = datetime.combine(date_from, datetime.min.time())
-        if date_to:
-            filters['date_to'] = datetime.combine(date_to, datetime.max.time())
-            
-        result = await appointment_service.search_appointments(query=q, filters=filters)
-        return result
-    except Exception as e:
-        logger.error(f"Error searching appointments: {e}")
-        raise HTTPException(status_code=500, detail="Failed to search appointments")
-
 @router.post("/", response_model=AppointmentResponse)
 async def create_appointment(appointment: AppointmentCreate):
     """Create a new appointment"""
@@ -84,6 +85,7 @@ async def create_appointment(appointment: AppointmentCreate):
         logger.error(f"Error creating appointment: {e}")
         raise HTTPException(status_code=500, detail="Failed to create appointment")
 
+# PARAMETERIZED ROUTES LAST
 @router.get("/{appointment_id}", response_model=AppointmentResponse)
 async def get_appointment(appointment_id: str):
     """Get appointment by ID"""

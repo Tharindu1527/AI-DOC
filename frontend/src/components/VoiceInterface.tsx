@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Mic, 
   MicOff, 
-  Volume2, 
   MessageCircle, 
   Calendar, 
   Clock,
@@ -12,7 +11,9 @@ import {
   CheckCircle,
   XCircle,
   RefreshCw,
-  Trash2
+  Trash2,
+  Wifi,
+  WifiOff
 } from 'lucide-react';
 import { useVoiceChat } from '../hooks/useVoiceChat';
 import { useVoiceStore } from '../stores/voiceStore';
@@ -32,6 +33,7 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ className = '' }) => {
     error,
     resetConnection
   } = useVoiceChat();
+  
   const { 
     messages, 
     clearMessages, 
@@ -43,12 +45,27 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ className = '' }) => {
 
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [audioSupported, setAudioSupported] = useState(true);
+  const [microphonePermission, setMicrophonePermission] = useState<'granted' | 'denied' | 'prompt'>('prompt');
 
   useEffect(() => {
     // Check if audio recording is supported
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       setAudioSupported(false);
     }
+
+    // Check microphone permission
+    navigator.permissions?.query({ name: 'microphone' as PermissionName })
+      .then(permissionStatus => {
+        setMicrophonePermission(permissionStatus.state as any);
+        
+        permissionStatus.onchange = () => {
+          setMicrophonePermission(permissionStatus.state as any);
+        };
+      })
+      .catch(() => {
+        // Permissions API not supported
+        setMicrophonePermission('prompt');
+      });
   }, []);
 
   const getConnectionStatusColor = () => {
@@ -66,6 +83,15 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ className = '' }) => {
       case 'connecting': return 'Connecting...';
       case 'error': return 'Connection Error';
       default: return 'Disconnected';
+    }
+  };
+
+  const getConnectionStatusIcon = () => {
+    switch (connectionStatus) {
+      case 'connected': return <Wifi className="w-4 h-4" />;
+      case 'connecting': return <RefreshCw className="w-4 h-4 animate-spin" />;
+      case 'error': return <WifiOff className="w-4 h-4" />;
+      default: return <WifiOff className="w-4 h-4" />;
     }
   };
 
@@ -161,6 +187,19 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ className = '' }) => {
     );
   };
 
+  const canRecord = () => {
+    return isConnected && audioSupported && microphonePermission !== 'denied';
+  };
+
+  const getRecordButtonMessage = () => {
+    if (!isConnected) return 'Not connected to server';
+    if (!audioSupported) return 'Audio not supported in this browser';
+    if (microphonePermission === 'denied') return 'Microphone access denied';
+    if (isProcessing) return 'Processing your request...';
+    if (isRecording) return 'Listening... Click to stop';
+    return 'Click to speak';
+  };
+
   return (
     <div className={`flex flex-col h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 ${className}`}>
       {/* Header */}
@@ -183,11 +222,21 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ className = '' }) => {
           <div className="flex items-center space-x-4">
             {/* Connection Status */}
             <div className="flex items-center space-x-2">
-              <div className={`w-2 h-2 rounded-full ${connectionStatus === 'connected' ? 'bg-green-400' : 'bg-gray-400'} animate-pulse`} />
+              <div className={getConnectionStatusColor()}>
+                {getConnectionStatusIcon()}
+              </div>
               <span className={`text-xs font-medium ${getConnectionStatusColor()}`}>
                 {getConnectionStatusText()}
               </span>
             </div>
+            
+            {/* Microphone Permission Status */}
+            {microphonePermission === 'denied' && (
+              <div className="flex items-center space-x-1 text-red-500">
+                <MicOff className="w-4 h-4" />
+                <span className="text-xs">Mic Denied</span>
+              </div>
+            )}
             
             {/* Action Buttons */}
             <div className="flex items-center space-x-2">
@@ -233,6 +282,7 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ className = '' }) => {
               currentIntent === 'book_appointment' ? 'bg-green-100 text-green-800' :
               currentIntent === 'cancel_appointment' ? 'bg-red-100 text-red-800' :
               currentIntent === 'reschedule_appointment' ? 'bg-yellow-100 text-yellow-800' :
+              currentIntent === 'emergency' ? 'bg-red-500 text-white animate-pulse' :
               'bg-blue-100 text-blue-800'
             }`}>
               {currentIntent === 'emergency' && <AlertCircle className="w-3 h-3 mr-1" />}
@@ -257,6 +307,14 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ className = '' }) => {
                 <div>
                   <h3 className="text-sm font-medium text-red-800">Connection Error</h3>
                   <p className="text-sm text-red-600 mt-1">{error}</p>
+                  <div className="mt-2">
+                    <button
+                      onClick={resetConnection}
+                      className="text-sm text-red-700 underline hover:no-underline"
+                    >
+                      Try reconnecting
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -290,18 +348,42 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ className = '' }) => {
               <p className="text-gray-600 mb-6 max-w-md mx-auto">
                 I'm here to help you manage your medical appointments. You can book, reschedule, or cancel appointments using your voice.
               </p>
-              {!audioSupported && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-                  <AlertCircle className="w-5 h-5 text-yellow-600 mx-auto mb-2" />
-                  <p className="text-yellow-800 text-sm">
-                    Audio recording is not supported in your browser. Please use a modern browser with microphone support.
-                  </p>
-                </div>
-              )}
+              
+              {/* System Status Warnings */}
+              <div className="space-y-3 mb-6">
+                {!audioSupported && (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 max-w-md mx-auto">
+                    <AlertCircle className="w-5 h-5 text-yellow-600 mx-auto mb-2" />
+                    <p className="text-yellow-800 text-sm">
+                      Audio recording is not supported in your browser. Please use Chrome, Firefox, or Safari.
+                    </p>
+                  </div>
+                )}
+                
+                {microphonePermission === 'denied' && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 max-w-md mx-auto">
+                    <MicOff className="w-5 h-5 text-red-600 mx-auto mb-2" />
+                    <p className="text-red-800 text-sm">
+                      Microphone access is required for voice chat. Please enable it in your browser settings.
+                    </p>
+                  </div>
+                )}
+                
+                {!isConnected && (
+                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 max-w-md mx-auto">
+                    <WifiOff className="w-5 h-5 text-orange-600 mx-auto mb-2" />
+                    <p className="text-orange-800 text-sm">
+                      Not connected to server. Please check your internet connection and try refreshing the page.
+                    </p>
+                  </div>
+                )}
+              </div>
+              
               <div className="space-y-2 text-sm text-gray-500">
                 <p>📅 Book appointments: "I need to schedule an appointment"</p>
                 <p>🔄 Reschedule: "I need to change my appointment"</p>
                 <p>❌ Cancel: "I want to cancel my appointment"</p>
+                <p>📞 Emergency: "This is an emergency"</p>
               </div>
             </motion.div>
           )}
@@ -310,7 +392,7 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ className = '' }) => {
           <AnimatePresence>
             {messages.map((message, index) => (
               <motion.div
-                key={index}
+                key={message.id || index}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
@@ -325,11 +407,24 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ className = '' }) => {
                 >
                   <p className="text-sm">{message.content}</p>
                   
-                  <div className={`text-xs mt-1 ${message.type === 'user' ? 'text-blue-100' : 'text-gray-500'}`}>
-                    {typeof message.timestamp === 'string' 
-                      ? format(new Date(message.timestamp), 'HH:mm')
-                      : format(message.timestamp, 'HH:mm')
-                    }
+                  {/* Message metadata */}
+                  <div className={`text-xs mt-1 flex items-center justify-between ${
+                    message.type === 'user' ? 'text-blue-100' : 'text-gray-500'
+                  }`}>
+                    <span>
+                      {typeof message.timestamp === 'string' 
+                        ? format(new Date(message.timestamp), 'HH:mm')
+                        : format(message.timestamp, 'HH:mm')
+                      }
+                    </span>
+                    {message.isAudio && (
+                      <span className="ml-2">🎵</span>
+                    )}
+                    {message.intent && message.intent !== 'general' && (
+                      <span className="ml-2 text-xs opacity-75">
+                        {message.intent}
+                      </span>
+                    )}
                   </div>
                 </div>
               </motion.div>
@@ -369,14 +464,14 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ className = '' }) => {
       >
         <div className="max-w-4xl mx-auto flex items-center justify-center">
           <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: canRecord() ? 1.05 : 1 }}
+            whileTap={{ scale: canRecord() ? 0.95 : 1 }}
             onClick={toggleRecording}
-            disabled={!isConnected || !audioSupported || isProcessing}
+            disabled={!canRecord() || isProcessing}
             className={`w-16 h-16 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg ${
               isRecording
                 ? 'bg-red-500 text-white animate-pulse'
-                : isConnected && audioSupported
+                : canRecord()
                 ? 'bg-blue-500 text-white hover:bg-blue-600'
                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
             }`}
@@ -388,12 +483,15 @@ const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ className = '' }) => {
             )}
           </motion.button>
           
-          <div className="ml-4 text-sm">
-            <p className={`font-medium ${isRecording ? 'text-red-600' : 'text-gray-700'}`}>
-              {isRecording ? 'Listening...' : 'Click to speak'}
+          <div className="ml-4 text-sm max-w-xs">
+            <p className={`font-medium ${
+              isRecording ? 'text-red-600' : 
+              canRecord() ? 'text-gray-700' : 'text-gray-500'
+            }`}>
+              {isRecording ? 'Listening...' : canRecord() ? 'Click to speak' : 'Voice unavailable'}
             </p>
             <p className="text-gray-500 text-xs">
-              {isRecording ? 'Say something or click to stop' : 'Press and hold or click to start recording'}
+              {getRecordButtonMessage()}
             </p>
           </div>
         </div>

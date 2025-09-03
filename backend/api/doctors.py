@@ -9,6 +9,7 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/doctors", tags=["doctors"])
 
+# SPECIFIC ROUTES FIRST
 @router.get("/statistics/", response_model=dict)
 async def get_doctor_statistics():
     """Get doctor statistics for dashboard"""
@@ -48,29 +49,33 @@ async def search_doctors(
         logger.error(f"Error searching doctors: {e}")
         raise HTTPException(status_code=500, detail="Failed to search doctors")
 
-@router.post("/", response_model=DoctorResponse)
-async def create_doctor(doctor: DoctorCreate):
-    """Create a new doctor"""
+@router.get("/available/", response_model=List[DoctorResponse])
+async def get_available_doctors(
+    specialty: Optional[str] = Query(None, description="Filter by specialty")
+):
+    """Get available doctors, optionally filtered by specialty"""
     try:
-        result = await doctor_service.create_doctor(doctor)
+        result = await doctor_service.get_available_doctors(specialty=specialty)
         return result
     except Exception as e:
-        logger.error(f"Error creating doctor: {e}")
-        raise HTTPException(status_code=500, detail="Failed to create doctor")
+        logger.error(f"Error getting available doctors: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get available doctors")
 
-@router.get("/{doctor_id}", response_model=DoctorResponse)
-async def get_doctor(doctor_id: str):
-    """Get doctor by ID"""
+@router.get("/find/by-name", response_model=DoctorResponse)
+async def find_doctor_by_name(
+    name: str = Query(..., description="Doctor name")
+):
+    """Find doctor by name (for voice appointments)"""
     try:
-        result = await doctor_service.get_doctor(doctor_id)
+        result = await doctor_service.get_doctor_by_name(name)
         if not result:
             raise HTTPException(status_code=404, detail="Doctor not found")
         return result
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error getting doctor: {e}")
-        raise HTTPException(status_code=500, detail="Failed to get doctor")
+        logger.error(f"Error finding doctor: {e}")
+        raise HTTPException(status_code=500, detail="Failed to find doctor")
 
 @router.get("/", response_model=List[DoctorResponse])
 async def get_all_doctors(
@@ -86,17 +91,30 @@ async def get_all_doctors(
         logger.error(f"Error getting doctors: {e}")
         raise HTTPException(status_code=500, detail="Failed to get doctors")
 
-@router.get("/available/", response_model=List[DoctorResponse])
-async def get_available_doctors(
-    specialty: Optional[str] = Query(None, description="Filter by specialty")
-):
-    """Get available doctors, optionally filtered by specialty"""
+@router.post("/", response_model=DoctorResponse)
+async def create_doctor(doctor: DoctorCreate):
+    """Create a new doctor"""
     try:
-        result = await doctor_service.get_available_doctors(specialty=specialty)
+        result = await doctor_service.create_doctor(doctor)
         return result
     except Exception as e:
-        logger.error(f"Error getting available doctors: {e}")
-        raise HTTPException(status_code=500, detail="Failed to get available doctors")
+        logger.error(f"Error creating doctor: {e}")
+        raise HTTPException(status_code=500, detail="Failed to create doctor")
+
+# PARAMETERIZED ROUTES LAST
+@router.get("/{doctor_id}", response_model=DoctorResponse)
+async def get_doctor(doctor_id: str):
+    """Get doctor by ID"""
+    try:
+        result = await doctor_service.get_doctor(doctor_id)
+        if not result:
+            raise HTTPException(status_code=404, detail="Doctor not found")
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting doctor: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get doctor")
 
 @router.put("/{doctor_id}", response_model=DoctorResponse)
 async def update_doctor(doctor_id: str, update_data: DoctorUpdate):
@@ -125,58 +143,3 @@ async def deactivate_doctor(doctor_id: str):
     except Exception as e:
         logger.error(f"Error deactivating doctor: {e}")
         raise HTTPException(status_code=500, detail="Failed to deactivate doctor")
-
-@router.get("/search/", response_model=List[DoctorResponse])
-async def search_doctors(
-    q: str = Query("", description="Search query"),
-    is_active: Optional[bool] = Query(None, description="Filter by active status"),
-    is_available: Optional[bool] = Query(None, description="Filter by availability"),
-    specialty: Optional[str] = Query(None, description="Filter by specialty"),
-    department: Optional[str] = Query(None, description="Filter by department"),
-    min_experience: Optional[int] = Query(None, ge=0, description="Minimum years of experience")
-):
-    """Search doctors with filters"""
-    try:
-        filters = {}
-        if is_active is not None:
-            filters['is_active'] = is_active
-        if is_available is not None:
-            filters['is_available'] = is_available
-        if specialty:
-            filters['specialty'] = specialty
-        if department:
-            filters['department'] = department
-        if min_experience:
-            filters['min_experience'] = min_experience
-            
-        result = await doctor_service.search_doctors(query=q, filters=filters)
-        return result
-    except Exception as e:
-        logger.error(f"Error searching doctors: {e}")
-        raise HTTPException(status_code=500, detail="Failed to search doctors")
-
-@router.get("/statistics/", response_model=dict)
-async def get_doctor_statistics():
-    """Get doctor statistics for dashboard"""
-    try:
-        result = await doctor_service.get_doctor_statistics()
-        return result
-    except Exception as e:
-        logger.error(f"Error getting doctor statistics: {e}")
-        raise HTTPException(status_code=500, detail="Failed to get doctor statistics")
-
-@router.get("/find/by-name", response_model=DoctorResponse)
-async def find_doctor_by_name(
-    name: str = Query(..., description="Doctor name")
-):
-    """Find doctor by name (for voice appointments)"""
-    try:
-        result = await doctor_service.get_doctor_by_name(name)
-        if not result:
-            raise HTTPException(status_code=404, detail="Doctor not found")
-        return result
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error finding doctor: {e}")
-        raise HTTPException(status_code=500, detail="Failed to find doctor")
