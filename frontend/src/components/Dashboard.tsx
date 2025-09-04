@@ -41,16 +41,15 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Simple API call function - no retries, no complex logic
+  // FIXED: Use correct URLs without hardcoded localhost
   const fetchData = async (url: string) => {
     const response = await fetch(url);
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
     return response.json();
   };
 
-  // Load data ONCE on component mount
   useEffect(() => {
     let isMounted = true;
 
@@ -58,10 +57,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       try {
         console.log('Loading dashboard data...');
         
+        // FIXED: Use relative URLs that work with the proxy
         const [patientsData, doctorsData, appointmentsData] = await Promise.all([
-          fetchData('http://localhost:8000/api/patients/statistics'),
-          fetchData('http://localhost:8000/api/doctors/statistics'),
-          fetchData('http://localhost:8000/api/appointments/statistics')
+          fetchData('/api/patients/statistics'),
+          fetchData('/api/doctors/statistics'),
+          fetchData('/api/appointments/statistics')
         ]);
 
         if (isMounted) {
@@ -70,14 +70,15 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
             doctors: doctorsData,
             appointments: appointmentsData
           });
+          setError(null);
           setLoading(false);
           console.log('Dashboard data loaded successfully');
         }
       } catch (err) {
+        console.error('Dashboard load error:', err);
         if (isMounted) {
           setError(err instanceof Error ? err.message : 'Failed to load data');
           setLoading(false);
-          console.error('Dashboard load error:', err);
         }
       }
     };
@@ -87,28 +88,35 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
     return () => {
       isMounted = false;
     };
-  }, []); // Empty dependency array - run ONLY once
+  }, []);
 
   const handleRefresh = () => {
     setLoading(true);
     setError(null);
-    window.location.reload(); // Simple refresh
+    // Trigger re-fetch by updating a dependency
+    window.location.reload();
   };
 
   const handleCreateSample = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/admin/create-sample-data', {
+      setLoading(true);
+      const response = await fetch('/api/admin/create-sample-data', {
         method: 'POST'
       });
       
       if (response.ok) {
-        alert('Sample data created successfully!');
+        console.log('Sample data created successfully');
+        // Refresh the page to load new data
         window.location.reload();
       } else {
-        alert('Failed to create sample data');
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        alert(`Failed to create sample data: ${errorData.error || response.statusText}`);
+        setLoading(false);
       }
     } catch (error) {
+      console.error('Error creating sample data:', error);
       alert('Error creating sample data');
+      setLoading(false);
     }
   };
 
@@ -129,12 +137,20 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         <XCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
         <h3 className="text-lg font-medium text-red-800 mb-2">Error Loading Dashboard</h3>
         <p className="text-red-600 mb-4">{error}</p>
-        <button 
-          onClick={handleRefresh}
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-        >
-          Retry
-        </button>
+        <div className="space-x-2">
+          <button 
+            onClick={handleRefresh}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            Retry
+          </button>
+          <button 
+            onClick={handleCreateSample}
+            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+          >
+            Create Sample Data
+          </button>
+        </div>
       </div>
     );
   }
@@ -144,6 +160,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       <div className="text-center py-12">
         <Database className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
         <h3 className="text-lg font-medium text-yellow-800 mb-2">No Data Available</h3>
+        <p className="text-yellow-600 mb-4">Your database appears to be empty. Create some sample data to get started.</p>
         <button 
           onClick={handleCreateSample}
           className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"

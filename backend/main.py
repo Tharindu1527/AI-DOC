@@ -86,11 +86,11 @@ def safe_include_router(router_path: str, router_name: str, prefix: str = "/api"
         logger.error(f"❌ Failed to load {router_name}: {e}")
         return False
 
-# Load all routers
+# Load all routers - MAKE SURE THIS ORDER IS MAINTAINED
 safe_include_router("api.appointments", "router", "/api")
-safe_include_router("api.voice", "router", "/api") 
-safe_include_router("api.patients", "router", "/api")
-safe_include_router("api.doctors", "router", "/api")
+safe_include_router("api.patients", "router", "/api")     # FIXED: Added this
+safe_include_router("api.doctors", "router", "/api")      # FIXED: Added this
+safe_include_router("api.voice", "router", "/api")
 
 @app.get("/")
 async def root():
