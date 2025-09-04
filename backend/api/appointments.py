@@ -10,8 +10,9 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/appointments", tags=["appointments"])
 
-# SPECIFIC ROUTES FIRST - before parameterized routes
-@router.get("/statistics/", response_model=dict)
+# ===== SPECIFIC ROUTES FIRST (BEFORE ANY PARAMETERIZED ROUTES) =====
+
+@router.get("/statistics")  # No trailing slash, specific route
 async def get_appointment_statistics():
     """Get appointment statistics for dashboard"""
     try:
@@ -21,7 +22,7 @@ async def get_appointment_statistics():
         logger.error(f"Error getting appointment statistics: {e}")
         raise HTTPException(status_code=500, detail="Failed to get appointment statistics")
 
-@router.get("/search/", response_model=List[AppointmentResponse])
+@router.get("/search")  # No trailing slash, specific route
 async def search_appointments(
     q: str = Query("", description="Search query"),
     status: Optional[str] = Query(None, description="Filter by status"),
@@ -47,7 +48,7 @@ async def search_appointments(
         logger.error(f"Error searching appointments: {e}")
         raise HTTPException(status_code=500, detail="Failed to search appointments")
 
-@router.get("/all/", response_model=List[AppointmentResponse])
+@router.get("/all")  # No trailing slash, specific route
 async def get_all_appointments(
     skip: int = Query(0, ge=0, description="Number of records to skip"),
     limit: int = Query(100, ge=1, le=1000, description="Number of records to return"),
@@ -75,7 +76,7 @@ async def get_all_appointments(
         logger.error(f"Error getting all appointments: {e}")
         raise HTTPException(status_code=500, detail="Failed to get appointments")
 
-@router.post("/", response_model=AppointmentResponse)
+@router.post("/")
 async def create_appointment(appointment: AppointmentCreate):
     """Create a new appointment"""
     try:
@@ -85,22 +86,9 @@ async def create_appointment(appointment: AppointmentCreate):
         logger.error(f"Error creating appointment: {e}")
         raise HTTPException(status_code=500, detail="Failed to create appointment")
 
-# PARAMETERIZED ROUTES LAST
-@router.get("/{appointment_id}", response_model=AppointmentResponse)
-async def get_appointment(appointment_id: str):
-    """Get appointment by ID"""
-    try:
-        result = await appointment_service.get_appointment(appointment_id)
-        if not result:
-            raise HTTPException(status_code=404, detail="Appointment not found")
-        return result
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error getting appointment: {e}")
-        raise HTTPException(status_code=500, detail="Failed to get appointment")
+# ===== SPECIFIC NAMED ROUTES (STILL BEFORE PARAMETERIZED) =====
 
-@router.get("/patient/{patient_id}", response_model=List[AppointmentResponse])
+@router.get("/patient/{patient_id}")
 async def get_patient_appointments(patient_id: str):
     """Get all appointments for a patient"""
     try:
@@ -110,7 +98,7 @@ async def get_patient_appointments(patient_id: str):
         logger.error(f"Error getting patient appointments: {e}")
         raise HTTPException(status_code=500, detail="Failed to get patient appointments")
 
-@router.get("/doctor/{doctor_name}", response_model=List[AppointmentResponse])
+@router.get("/doctor/{doctor_name}")
 async def get_doctor_appointments(
     doctor_name: str,
     date: Optional[date] = Query(None, description="Filter by specific date (YYYY-MM-DD)")
@@ -126,34 +114,6 @@ async def get_doctor_appointments(
     except Exception as e:
         logger.error(f"Error getting doctor appointments: {e}")
         raise HTTPException(status_code=500, detail="Failed to get doctor appointments")
-
-@router.put("/{appointment_id}", response_model=AppointmentResponse)
-async def update_appointment(appointment_id: str, update_data: AppointmentUpdate):
-    """Update an appointment"""
-    try:
-        result = await appointment_service.update_appointment(appointment_id, update_data)
-        if not result:
-            raise HTTPException(status_code=404, detail="Appointment not found")
-        return result
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error updating appointment: {e}")
-        raise HTTPException(status_code=500, detail="Failed to update appointment")
-
-@router.delete("/{appointment_id}")
-async def cancel_appointment(appointment_id: str):
-    """Cancel an appointment"""
-    try:
-        result = await appointment_service.cancel_appointment(appointment_id)
-        if not result:
-            raise HTTPException(status_code=404, detail="Appointment not found")
-        return {"message": "Appointment cancelled successfully"}
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error cancelling appointment: {e}")
-        raise HTTPException(status_code=500, detail="Failed to cancel appointment")
 
 @router.get("/availability/{doctor_name}")
 async def get_available_slots(
@@ -176,3 +136,59 @@ async def get_available_slots(
     except Exception as e:
         logger.error(f"Error getting available slots: {e}")
         raise HTTPException(status_code=500, detail="Failed to get available slots")
+
+# ===== PARAMETERIZED ROUTES LAST =====
+
+@router.get("/{appointment_id}")
+async def get_appointment(appointment_id: str):
+    """Get appointment by ID - THIS MUST BE LAST!"""
+    try:
+        # Validate that this looks like an ObjectId
+        if len(appointment_id) != 24 or not all(c in '0123456789abcdefABCDEF' for c in appointment_id):
+            raise HTTPException(status_code=400, detail="Invalid appointment ID format")
+            
+        result = await appointment_service.get_appointment(appointment_id)
+        if not result:
+            raise HTTPException(status_code=404, detail="Appointment not found")
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting appointment: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get appointment")
+
+@router.put("/{appointment_id}")
+async def update_appointment(appointment_id: str, update_data: AppointmentUpdate):
+    """Update an appointment"""
+    try:
+        # Validate ObjectId format
+        if len(appointment_id) != 24 or not all(c in '0123456789abcdefABCDEF' for c in appointment_id):
+            raise HTTPException(status_code=400, detail="Invalid appointment ID format")
+            
+        result = await appointment_service.update_appointment(appointment_id, update_data)
+        if not result:
+            raise HTTPException(status_code=404, detail="Appointment not found")
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating appointment: {e}")
+        raise HTTPException(status_code=500, detail="Failed to update appointment")
+
+@router.delete("/{appointment_id}")
+async def cancel_appointment(appointment_id: str):
+    """Cancel an appointment"""
+    try:
+        # Validate ObjectId format
+        if len(appointment_id) != 24 or not all(c in '0123456789abcdefABCDEF' for c in appointment_id):
+            raise HTTPException(status_code=400, detail="Invalid appointment ID format")
+            
+        result = await appointment_service.cancel_appointment(appointment_id)
+        if not result:
+            raise HTTPException(status_code=404, detail="Appointment not found")
+        return {"message": "Appointment cancelled successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error cancelling appointment: {e}")
+        raise HTTPException(status_code=500, detail="Failed to cancel appointment")

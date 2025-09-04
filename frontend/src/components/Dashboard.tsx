@@ -1,17 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { 
   Users, 
   UserCheck, 
   Calendar, 
   Activity,
-  TrendingUp,
-  BarChart3,
-  PieChart,
-  Search,
-  Plus,
-  Database,
   RefreshCw,
+  Database,
   XCircle
 } from 'lucide-react';
 
@@ -46,95 +40,85 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   const [statistics, setStatistics] = useState<Statistics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isCreatingSample, setIsCreatingSample] = useState(false);
-  const [isClearingDb, setIsClearingDb] = useState(false);
 
-  const fetchStatistics = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const [patientsRes, doctorsRes, appointmentsRes] = await Promise.all([
-        fetch('http://localhost:8000/api/patients/statistics'),
-        fetch('http://localhost:8000/api/doctors/statistics'),
-        fetch('http://localhost:8000/api/appointments/statistics')
-      ]);
-
-      if (!patientsRes.ok || !doctorsRes.ok || !appointmentsRes.ok) {
-        throw new Error('Failed to fetch statistics');
-      }
-
-      const [patientsData, doctorsData, appointmentsData] = await Promise.all([
-        patientsRes.json(),
-        doctorsRes.json(),
-        appointmentsRes.json()
-      ]);
-
-      setStatistics({
-        patients: patientsData,
-        doctors: doctorsData,
-        appointments: appointmentsData
-      });
-    } catch (err) {
-      console.error('Error fetching statistics:', err);
-      setError('Failed to load dashboard statistics');
-    } finally {
-      setLoading(false);
+  // Simple API call function - no retries, no complex logic
+  const fetchData = async (url: string) => {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
     }
+    return response.json();
   };
 
-  const createSampleData = async () => {
+  // Load data ONCE on component mount
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadData = async () => {
+      try {
+        console.log('Loading dashboard data...');
+        
+        const [patientsData, doctorsData, appointmentsData] = await Promise.all([
+          fetchData('http://localhost:8000/api/patients/statistics'),
+          fetchData('http://localhost:8000/api/doctors/statistics'),
+          fetchData('http://localhost:8000/api/appointments/statistics')
+        ]);
+
+        if (isMounted) {
+          setStatistics({
+            patients: patientsData,
+            doctors: doctorsData,
+            appointments: appointmentsData
+          });
+          setLoading(false);
+          console.log('Dashboard data loaded successfully');
+        }
+      } catch (err) {
+        if (isMounted) {
+          setError(err instanceof Error ? err.message : 'Failed to load data');
+          setLoading(false);
+          console.error('Dashboard load error:', err);
+        }
+      }
+    };
+
+    loadData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []); // Empty dependency array - run ONLY once
+
+  const handleRefresh = () => {
+    setLoading(true);
+    setError(null);
+    window.location.reload(); // Simple refresh
+  };
+
+  const handleCreateSample = async () => {
     try {
-      setIsCreatingSample(true);
       const response = await fetch('http://localhost:8000/api/admin/create-sample-data', {
-        method: 'POST',
+        method: 'POST'
       });
-      const data = await response.json();
+      
       if (response.ok) {
         alert('Sample data created successfully!');
-        fetchStatistics(); // Refresh stats
+        window.location.reload();
       } else {
-        alert(`Error: ${data.error || 'Failed to create sample data'}`);
+        alert('Failed to create sample data');
       }
     } catch (error) {
-      alert(`Error: ${error}`);
-    } finally {
-      setIsCreatingSample(false);
+      alert('Error creating sample data');
     }
   };
-
-  const clearDatabase = async () => {
-    if (!window.confirm('Are you sure you want to clear all database data? This cannot be undone.')) {
-      return;
-    }
-    
-    try {
-      setIsClearingDb(true);
-      const response = await fetch('http://localhost:8000/api/admin/clear-database', {
-        method: 'POST',
-      });
-      const data = await response.json();
-      if (response.ok) {
-        alert('Database cleared successfully!');
-        fetchStatistics(); // Refresh stats
-      } else {
-        alert(`Error: ${data.error || 'Failed to clear database'}`);
-      }
-    } catch (error) {
-      alert(`Error: ${error}`);
-    } finally {
-      setIsClearingDb(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchStatistics();
-  }, []);
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="text-center">
+          <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
+          <p>Loading Dashboard...</p>
+        </div>
       </div>
     );
   }
@@ -142,10 +126,12 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   if (error) {
     return (
       <div className="text-center py-12">
+        <XCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+        <h3 className="text-lg font-medium text-red-800 mb-2">Error Loading Dashboard</h3>
         <p className="text-red-600 mb-4">{error}</p>
         <button 
-          onClick={fetchStatistics}
-          className="btn-primary"
+          onClick={handleRefresh}
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
         >
           Retry
         </button>
@@ -153,73 +139,51 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
     );
   }
 
-  if (!statistics) return null;
-
-  const quickActions = [
-    { icon: Plus, label: 'New Patient', action: () => onNavigate('patients-create'), color: 'bg-blue-500' },
-    { icon: Plus, label: 'New Doctor', action: () => onNavigate('doctors-create'), color: 'bg-green-500' },
-    { icon: Calendar, label: 'Schedule Appointment', action: () => onNavigate('appointments-create'), color: 'bg-purple-500' },
-    { icon: Search, label: 'Search Records', action: () => onNavigate('search'), color: 'bg-orange-500' }
-  ];
+  if (!statistics) {
+    return (
+      <div className="text-center py-12">
+        <Database className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
+        <h3 className="text-lg font-medium text-yellow-800 mb-2">No Data Available</h3>
+        <button 
+          onClick={handleCreateSample}
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          Create Sample Data
+        </button>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 p-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">DocTalk AI Dashboard</h1>
-          <p className="text-gray-600 mt-2">Comprehensive medical practice management</p>
+          <p className="text-gray-600">Medical practice management</p>
         </div>
-        <div className="flex space-x-3">
-          {/* Admin buttons */}
+        <div className="space-x-2">
           <button
-            onClick={fetchStatistics}
-            disabled={loading}
-            className="flex items-center gap-2 px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors disabled:opacity-50"
+            onClick={handleRefresh}
+            className="px-3 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
           >
-            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-            <span className="hidden sm:block">Refresh</span>
+            <RefreshCw className="w-4 h-4 inline mr-2" />
+            Refresh
           </button>
           <button
-            onClick={createSampleData}
-            disabled={isCreatingSample}
-            className="flex items-center gap-2 px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50"
+            onClick={handleCreateSample}
+            className="px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
           >
-            <Database className={`h-4 w-4 ${isCreatingSample ? 'animate-spin' : ''}`} />
-            <span className="hidden sm:block">{isCreatingSample ? 'Creating...' : 'Sample Data'}</span>
+            <Database className="w-4 h-4 inline mr-2" />
+            Sample Data
           </button>
-          <button
-            onClick={clearDatabase}
-            disabled={isClearingDb}
-            className="flex items-center gap-2 px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50"
-          >
-            <XCircle className={`h-4 w-4 ${isClearingDb ? 'animate-spin' : ''}`} />
-            <span className="hidden sm:block">{isClearingDb ? 'Clearing...' : 'Clear DB'}</span>
-          </button>
-          
-          {/* Quick action buttons */}
-          {quickActions.map((action, index) => (
-            <motion.button
-              key={index}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={action.action}
-              className={`${action.color} text-white px-4 py-2 rounded-lg flex items-center space-x-2 shadow-lg`}
-            >
-              <action.icon className="w-4 h-4" />
-              <span className="hidden sm:block">{action.label}</span>
-            </motion.button>
-          ))}
         </div>
       </div>
 
-      {/* Key Metrics Cards */}
+      {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="card bg-gradient-to-r from-blue-500 to-blue-600 text-white"
-        >
+        <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6 rounded-lg cursor-pointer hover:shadow-lg"
+             onClick={() => onNavigate('patients')}>
           <div className="flex items-center justify-between">
             <div>
               <p className="text-blue-100">Total Patients</p>
@@ -228,14 +192,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
             </div>
             <Users className="w-12 h-12 text-blue-200" />
           </div>
-        </motion.div>
+        </div>
 
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="card bg-gradient-to-r from-green-500 to-green-600 text-white"
-        >
+        <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-6 rounded-lg cursor-pointer hover:shadow-lg"
+             onClick={() => onNavigate('doctors')}>
           <div className="flex items-center justify-between">
             <div>
               <p className="text-green-100">Available Doctors</p>
@@ -244,14 +204,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
             </div>
             <UserCheck className="w-12 h-12 text-green-200" />
           </div>
-        </motion.div>
+        </div>
 
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="card bg-gradient-to-r from-purple-500 to-purple-600 text-white"
-        >
+        <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-6 rounded-lg cursor-pointer hover:shadow-lg"
+             onClick={() => onNavigate('appointments')}>
           <div className="flex items-center justify-between">
             <div>
               <p className="text-purple-100">Today's Appointments</p>
@@ -260,167 +216,55 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
             </div>
             <Calendar className="w-12 h-12 text-purple-200" />
           </div>
-        </motion.div>
+        </div>
 
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="card bg-gradient-to-r from-orange-500 to-orange-600 text-white"
-        >
+        <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-6 rounded-lg cursor-pointer hover:shadow-lg"
+             onClick={() => onNavigate('voice')}>
           <div className="flex items-center justify-between">
             <div>
               <p className="text-orange-100">Monthly Appointments</p>
               <h3 className="text-3xl font-bold">{statistics.appointments.this_month}</h3>
-              <p className="text-orange-200 text-sm">Active bookings</p>
+              <p className="text-orange-200 text-sm">Voice available</p>
             </div>
             <Activity className="w-12 h-12 text-orange-200" />
           </div>
-        </motion.div>
+        </div>
       </div>
 
-      {/* Detailed Statistics Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-        {/* Patient Demographics */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="card"
-        >
-          <div className="flex items-center space-x-3 mb-4">
-            <div className="bg-blue-100 p-2 rounded-lg">
-              <PieChart className="w-5 h-5 text-blue-600" />
-            </div>
-            <h3 className="text-lg font-semibold">Patient Demographics</h3>
-          </div>
-          
-          <div className="space-y-3">
-            <div>
-              <h4 className="font-medium text-gray-700 mb-2">By Gender</h4>
-              {Object.entries(statistics.patients.by_gender).map(([gender, count]) => (
-                <div key={gender} className="flex justify-between items-center py-1">
-                  <span className="text-gray-600 capitalize">{gender}</span>
-                  <span className="font-medium">{count}</span>
-                </div>
-              ))}
-            </div>
-            
-            <div>
-              <h4 className="font-medium text-gray-700 mb-2">By Age Group</h4>
-              {Object.entries(statistics.patients.by_age_group).map(([age, count]) => (
-                <div key={age} className="flex justify-between items-center py-1">
-                  <span className="text-gray-600">{age}</span>
-                  <span className="font-medium">{count}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Doctor Specialties */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="card"
-        >
-          <div className="flex items-center space-x-3 mb-4">
-            <div className="bg-green-100 p-2 rounded-lg">
-              <BarChart3 className="w-5 h-5 text-green-600" />
-            </div>
-            <h3 className="text-lg font-semibold">Doctor Specialties</h3>
-          </div>
-          
-          <div className="space-y-3">
-            {Object.entries(statistics.doctors.by_specialty).map(([specialty, count]) => (
-              <div key={specialty} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-b-0">
-                <span className="text-gray-700">{specialty}</span>
-                <span className="font-medium text-green-600">{count}</span>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* Appointment Status */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-          className="card"
-        >
-          <div className="flex items-center space-x-3 mb-4">
-            <div className="bg-purple-100 p-2 rounded-lg">
-              <TrendingUp className="w-5 h-5 text-purple-600" />
-            </div>
-            <h3 className="text-lg font-semibold">Appointment Status</h3>
-          </div>
-          
-          <div className="space-y-3">
-            {Object.entries(statistics.appointments.by_status).map(([status, count]) => {
-              const getStatusColor = (status: string) => {
-                switch (status) {
-                  case 'scheduled': return 'bg-blue-500';
-                  case 'completed': return 'bg-green-500';
-                  case 'cancelled': return 'bg-red-500';
-                  case 'rescheduled': return 'bg-yellow-500';
-                  default: return 'bg-gray-500';
-                }
-              };
-              
-              return (
-                <div key={status} className="flex justify-between items-center py-2">
-                  <div className="flex items-center space-x-2">
-                    <div className={`w-3 h-3 rounded-full ${getStatusColor(status)}`}></div>
-                    <span className="text-gray-700 capitalize">{status}</span>
-                  </div>
-                  <span className="font-medium">{count}</span>
-                </div>
-              );
-            })}
-          </div>
-        </motion.div>
-      </div>
-
-      {/* Quick Access Buttons */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.7 }}
-        className="card"
-      >
+      {/* Quick Access */}
+      <div className="bg-white p-6 rounded-lg shadow">
         <h3 className="text-lg font-semibold mb-4">Quick Access</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <button 
             onClick={() => onNavigate('patients')}
-            className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors"
+            className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50"
           >
             <Users className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-            <p className="text-sm font-medium text-gray-700">All Patients</p>
+            <p className="text-sm font-medium text-gray-700">Patients</p>
           </button>
           <button 
             onClick={() => onNavigate('doctors')}
-            className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-500 hover:bg-green-50 transition-colors"
+            className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-500 hover:bg-green-50"
           >
             <UserCheck className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-            <p className="text-sm font-medium text-gray-700">All Doctors</p>
+            <p className="text-sm font-medium text-gray-700">Doctors</p>
           </button>
           <button 
             onClick={() => onNavigate('appointments')}
-            className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-colors"
+            className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-purple-500 hover:bg-purple-50"
           >
             <Calendar className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-            <p className="text-sm font-medium text-gray-700">All Appointments</p>
+            <p className="text-sm font-medium text-gray-700">Appointments</p>
           </button>
           <button 
             onClick={() => onNavigate('voice')}
-            className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-orange-500 hover:bg-orange-50 transition-colors"
+            className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-orange-500 hover:bg-orange-50"
           >
             <Activity className="w-8 h-8 text-gray-400 mx-auto mb-2" />
             <p className="text-sm font-medium text-gray-700">Voice Chat</p>
           </button>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 };

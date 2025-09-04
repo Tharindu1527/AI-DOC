@@ -7,13 +7,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
 import traceback
+from datetime import datetime
 
 from config import settings
-from database.mongodb import connect_to_mongo, close_mongo_connection
-from api.appointments import router as appointments_router
-from api.voice import router as voice_router
-from api.patients import router as patients_router
-from api.doctors import router as doctors_router
 
 # Configure logging
 logging.basicConfig(
@@ -31,10 +27,11 @@ async def lifespan(app: FastAPI):
     # Startup
     logger.info("Starting up DocTalk AI backend...")
     try:
+        from database.mongodb import connect_to_mongo
         await connect_to_mongo()
         logger.info("Database connection established")
         
-        # Validate API keys in production
+        # Only validate API keys in production
         if not settings.debug:
             try:
                 settings.validate_api_keys()
@@ -44,14 +41,18 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"Failed to start application: {e}")
         logger.error(traceback.format_exc())
-        raise
+        # Don't raise - allow app to start without some features
     
     yield
     
     # Shutdown
     logger.info("Shutting down DocTalk AI backend...")
-    await close_mongo_connection()
-    logger.info("Database connection closed")
+    try:
+        from database.mongodb import close_mongo_connection
+        await close_mongo_connection()
+        logger.info("Database connection closed")
+    except Exception as e:
+        logger.error(f"Error during shutdown: {e}")
 
 # Create FastAPI app
 app = FastAPI(
@@ -72,11 +73,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include routers
-app.include_router(appointments_router, prefix="/api")
-app.include_router(voice_router, prefix="/api")
-app.include_router(patients_router, prefix="/api")
-app.include_router(doctors_router, prefix="/api")
+# Include routers with proper error handling
+def safe_include_router(router_path: str, router_name: str, prefix: str = "/api"):
+    """Safely include a router with error handling"""
+    try:
+        module = __import__(router_path, fromlist=[router_name])
+        router = getattr(module, router_name)
+        app.include_router(router, prefix=prefix)
+        logger.info(f"✅ {router_name} loaded successfully")
+        return True
+    except Exception as e:
+        logger.error(f"❌ Failed to load {router_name}: {e}")
+        return False
+
+# Load all routers
+safe_include_router("api.appointments", "router", "/api")
+safe_include_router("api.voice", "router", "/api") 
+safe_include_router("api.patients", "router", "/api")
+safe_include_router("api.doctors", "router", "/api")
 
 @app.get("/")
 async def root():
@@ -86,23 +100,30 @@ async def root():
         "version": "1.0.0",
         "docs": "/docs" if settings.debug else "Documentation disabled in production",
         "health": "/health",
-        "status": "running"
+        "status": "running",
+        "timestamp": datetime.now().isoformat()
     }
 
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
     try:
-        from database.mongodb import get_database
-        from services.voice_service import voice_service
-        
         # Test database connection
-        db = get_database()
-        await db.admin.command('ping')
-        db_status = "connected"
+        from database.mongodb import get_database, health_check as db_health
+        db_status = "disconnected"
+        try:
+            if await db_health():
+                db_status = "connected"
+        except:
+            pass
         
         # Test voice service
-        voice_health = voice_service.health_check()
+        voice_health = {"status": "unavailable"}
+        try:
+            from services.voice_service import voice_service
+            voice_health = voice_service.health_check()
+        except:
+            pass
         
         return {
             "status": "healthy",
@@ -110,7 +131,7 @@ async def health_check():
             "version": "1.0.0",
             "database": db_status,
             "services": voice_health,
-            "timestamp": str(datetime.now())
+            "timestamp": datetime.now().isoformat()
         }
     except Exception as e:
         logger.error(f"Health check failed: {e}")
@@ -119,7 +140,7 @@ async def health_check():
             content={
                 "status": "unhealthy",
                 "message": str(e),
-                "timestamp": str(datetime.now())
+                "timestamp": datetime.now().isoformat()
             }
         )
 
@@ -131,27 +152,14 @@ async def create_sample_data():
         raise HTTPException(status_code=403, detail="Admin endpoints disabled in production")
     
     try:
-        script_path = os.path.join(os.path.dirname(__file__), "create_sample_data.py")
-        result = subprocess.run(
-            [sys.executable, script_path], 
-            capture_output=True, 
-            text=True, 
-            cwd=os.path.dirname(__file__)
-        )
-        
-        if result.returncode == 0:
-            return {"message": "Sample data created successfully", "output": result.stdout}
-        else:
-            logger.error(f"Sample data creation failed: {result.stderr}")
-            return JSONResponse(
-                status_code=500,
-                content={"error": "Failed to create sample data", "details": result.stderr}
-            )
+        from create_sample_data import create_sample_data as create_data
+        result = await create_data()
+        return {"message": "Sample data created successfully", "result": result}
     except Exception as e:
-        logger.error(f"Error running sample data script: {e}")
+        logger.error(f"Error creating sample data: {e}")
         return JSONResponse(
             status_code=500,
-            content={"error": f"Error running sample data script: {str(e)}"}
+            content={"error": f"Failed to create sample data: {str(e)}"}
         )
 
 @app.post("/api/admin/clear-database")
@@ -161,27 +169,22 @@ async def clear_database():
         raise HTTPException(status_code=403, detail="Admin endpoints disabled in production")
     
     try:
-        script_path = os.path.join(os.path.dirname(__file__), "db_utils.py")
-        result = subprocess.run(
-            [sys.executable, script_path, "clear"], 
-            capture_output=True, 
-            text=True, 
-            cwd=os.path.dirname(__file__)
-        )
+        from database.mongodb import get_database
+        db = get_database()
         
-        if result.returncode == 0:
-            return {"message": "Database cleared successfully", "output": result.stdout}
-        else:
-            logger.error(f"Database clear failed: {result.stderr}")
-            return JSONResponse(
-                status_code=500,
-                content={"error": "Failed to clear database", "details": result.stderr}
-            )
+        # Get all collection names
+        collections = await db.list_collection_names()
+        
+        # Drop each collection
+        for collection_name in collections:
+            await db[collection_name].drop()
+        
+        return {"message": "Database cleared successfully", "collections_cleared": collections}
     except Exception as e:
-        logger.error(f"Error running clear database script: {e}")
+        logger.error(f"Error clearing database: {e}")
         return JSONResponse(
             status_code=500,
-            content={"error": f"Error running database clear script: {str(e)}"}
+            content={"error": f"Error clearing database: {str(e)}"}
         )
 
 @app.get("/api/admin/database-stats")
@@ -227,7 +230,8 @@ async def global_exception_handler(request, exc):
             content={
                 "detail": str(exc),
                 "type": type(exc).__name__,
-                "url": str(request.url)
+                "url": str(request.url),
+                "traceback": traceback.format_exc()
             }
         )
     else:
@@ -238,7 +242,6 @@ async def global_exception_handler(request, exc):
 
 if __name__ == "__main__":
     import uvicorn
-    from datetime import datetime
     
     logger.info(f"Starting DocTalk AI backend on {settings.host}:{settings.port}")
     logger.info(f"Debug mode: {settings.debug}")
@@ -256,7 +259,10 @@ if __name__ == "__main__":
             log_level="info" if not settings.debug else "debug",
             access_log=True,
             use_colors=True,
-            reload_dirs=["./"] if settings.debug else None
+            reload_dirs=["./"] if settings.debug else None,
+            # Connection management
+            timeout_keep_alive=30,
+            timeout_graceful_shutdown=30
         )
     except Exception as e:
         logger.error(f"Failed to start server: {e}")

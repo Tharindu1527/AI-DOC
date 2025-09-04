@@ -1,0 +1,178 @@
+2025-09-05 00:46:25,412 - main - INFO - Starting up DocTalk AI backend...
+2025-09-05 00:46:26,455 - database.mongodb - INFO - Connected to MongoDB: doctalk_ai
+2025-09-05 00:46:27,146 - database.mongodb - ERROR - Error creating indexes: An existing index has the same name as the requested index. When index names are not specified, they are auto generated and can cause conflicts. Please refer to our documentation. Requested index: { v: 2, key: { phone: 1 }, name: "phone_1" }, existing index: { v: 2, unique: true, key: { phone: 1 }, name: "phone_1", sparse: true }, full error: {'ok': 0.0, 'errmsg': 'An existing index has the same name as the requested index. When index names are not specified, they are auto generated and can cause conflicts. Please refer to our documentation. Requested index: { v: 2, key: { phone: 1 }, name: "phone_1" }, existing index: { v: 2, unique: true, key: { phone: 1 }, name: "phone_1", sparse: true }', 'code': 86, 'codeName': 'IndexKeySpecsConflict', '$clusterTime': {'clusterTime': Timestamp(1757013386, 34), 'signature': {'hash': b'\x96\x9c\xcb;._ n#^\x84\xcc \ns\xfa\x03<$>', 'keyId': 7485996588108611635}}, 'operationTime': Timestamp(1757013386, 34)}
+2025-09-05 00:46:27,154 - main - INFO - Database connection established
+2025-09-05 00:46:51,120 - services.appointment_service - ERROR - Error getting appointment: 'statistics' is not a valid ObjectId, it must be a 12-byte input or a 24-character hex string
+2025-09-05 00:46:51,120 - api.appointments - ERROR - Error getting appointment: 'statistics' is not a valid ObjectId, it must be a 12-byte input or a 24-character hex string
+2025-09-05 00:46:51,120 - services.appointment_service - ERROR - Error getting appointment: 'statistics' is not a valid ObjectId, it must be a 12-byte input or a 24-character hex string
+2025-09-05 00:46:51,120 - api.appointments - ERROR - Error getting appointment: 'statistics' is not a valid ObjectId, it must be a 12-byte input or a 24-character hex string
+2025-09-05 00:47:10,682 - services.appointment_service - ERROR - Error getting appointment: 'statistics' is not a valid ObjectId, it must be a 12-byte input or a 24-character hex string
+2025-09-05 00:47:10,682 - api.appointments - ERROR - Error getting appointment: 'statistics' is not a valid ObjectId, it must be a 12-byte input or a 24-character hex string
+2025-09-05 00:47:10,822 - services.appointment_service - ERROR - Error getting appointment: 'statistics' is not a valid ObjectId, it must be a 12-byte input or a 24-character hex string
+2025-09-05 00:47:10,822 - api.appointments - ERROR - Error getting appointment: 'statistics' is not a valid ObjectId, it must be a 12-byte input or a 24-character hex string
+2025-09-05 00:47:36,924 - main - INFO - Shutting down DocTalk AI backend...
+2025-09-05 00:47:37,000 - database.mongodb - INFO - Disconnected from MongoDB
+2025-09-05 00:47:37,000 - main - INFO - Database connection closed
+2025-09-05 00:49:37,266 - main - INFO - Starting up DocTalk AI backend...
+2025-09-05 00:49:38,302 - database.mongodb - INFO - Connected to MongoDB: doctalk_ai
+2025-09-05 00:49:38,906 - database.mongodb - ERROR - Error creating indexes: An existing index has the same name as the requested index. When index names are not specified, they are auto generated and can cause conflicts. Please refer to our documentation. Requested index: { v: 2, key: { phone: 1 }, name: "phone_1" }, existing index: { v: 2, unique: true, key: { phone: 1 }, name: "phone_1", sparse: true }, full error: {'ok': 0.0, 'errmsg': 'An existing index has the same name as the requested index. When index names are not specified, they are auto generated and can cause conflicts. Please refer to our documentation. Requested index: { v: 2, key: { phone: 1 }, name: "phone_1" }, existing index: { v: 2, unique: true, key: { phone: 1 }, name: "phone_1", sparse: true }', 'code': 86, 'codeName': 'IndexKeySpecsConflict', '$clusterTime': {'clusterTime': Timestamp(1757013578, 13), 'signature': {'hash': b'T\x18\xeec\xfb\xce[z\xf3\xf2\x1c\x9bM[\xa9\x96\xa2aCh', 'keyId': 7485996588108611635}}, 'operationTime': Timestamp(1757013578, 13)}
+2025-09-05 00:49:38,906 - main - INFO - Database connection established
+2025-09-05 00:50:30,294 - main - INFO - Shutting down DocTalk AI backend...
+2025-09-05 00:50:30,360 - database.mongodb - INFO - Disconnected from MongoDB
+2025-09-05 00:50:30,361 - main - INFO - Database connection closed
+2025-09-05 00:50:35,173 - main - INFO - Starting up DocTalk AI backend...
+2025-09-05 00:50:35,930 - database.mongodb - INFO - Connected to MongoDB: doctalk_ai
+2025-09-05 00:50:36,531 - database.mongodb - ERROR - Error creating indexes: An existing index has the same name as the requested index. When index names are not specified, they are auto generated and can cause conflicts. Please refer to our documentation. Requested index: { v: 2, key: { phone: 1 }, name: "phone_1" }, existing index: { v: 2, unique: true, key: { phone: 1 }, name: "phone_1", sparse: true }, full error: {'ok': 0.0, 'errmsg': 'An existing index has the same name as the requested index. When index names are not specified, they are auto generated and can cause conflicts. Please refer to our documentation. Requested index: { v: 2, key: { phone: 1 }, name: "phone_1" }, existing index: { v: 2, unique: true, key: { phone: 1 }, name: "phone_1", sparse: true }', 'code': 86, 'codeName': 'IndexKeySpecsConflict', '$clusterTime': {'clusterTime': Timestamp(1757013636, 3), 'signature': {'hash': b'$\xc3\xdc\xe4\xdbg*\xb0\x95\x11As\xf3\x81\xca\x88\xac\xa9\x14\x1e', 'keyId': 7485996588108611635}}, 'operationTime': Timestamp(1757013636, 3)}
+2025-09-05 00:50:36,538 - main - INFO - Database connection established
+2025-09-05 00:51:17,268 - main - INFO - Shutting down DocTalk AI backend...
+2025-09-05 00:51:17,334 - database.mongodb - INFO - Disconnected from MongoDB
+2025-09-05 00:51:17,335 - main - INFO - Database connection closed
+2025-09-05 00:51:57,730 - main - INFO - Starting up DocTalk AI backend...
+2025-09-05 00:51:58,645 - database.mongodb - INFO - Connected to MongoDB: doctalk_ai
+2025-09-05 00:51:59,248 - database.mongodb - ERROR - Error creating indexes: An existing index has the same name as the requested index. When index names are not specified, they are auto generated and can cause conflicts. Please refer to our documentation. Requested index: { v: 2, key: { phone: 1 }, name: "phone_1" }, existing index: { v: 2, unique: true, key: { phone: 1 }, name: "phone_1", sparse: true }, full error: {'ok': 0.0, 'errmsg': 'An existing index has the same name as the requested index. When index names are not specified, they are auto generated and can cause conflicts. Please refer to our documentation. Requested index: { v: 2, key: { phone: 1 }, name: "phone_1" }, existing index: { v: 2, unique: true, key: { phone: 1 }, name: "phone_1", sparse: true }', 'code': 86, 'codeName': 'IndexKeySpecsConflict', '$clusterTime': {'clusterTime': Timestamp(1757013718, 47), 'signature': {'hash': b'\x9eX\xfb[\xb5\x05\x1dS\xcf\xda\x855\xb0\x9b\x1e\x94\x7fi^~', 'keyId': 7485996588108611635}}, 'operationTime': Timestamp(1757013718, 47)}
+2025-09-05 00:51:59,248 - main - INFO - Database connection established
+2025-09-05 01:00:01,461 - main - INFO - Shutting down DocTalk AI backend...
+2025-09-05 01:00:01,527 - database.mongodb - INFO - Disconnected from MongoDB
+2025-09-05 01:00:01,528 - main - INFO - Database connection closed
+2025-09-05 01:00:17,322 - main - INFO - Starting up DocTalk AI backend...
+2025-09-05 01:00:18,384 - database.mongodb - INFO - Connected to MongoDB: doctalk_ai
+2025-09-05 01:00:19,084 - database.mongodb - ERROR - Error creating indexes: An existing index has the same name as the requested index. When index names are not specified, they are auto generated and can cause conflicts. Please refer to our documentation. Requested index: { v: 2, key: { phone: 1 }, name: "phone_1" }, existing index: { v: 2, unique: true, key: { phone: 1 }, name: "phone_1", sparse: true }, full error: {'ok': 0.0, 'errmsg': 'An existing index has the same name as the requested index. When index names are not specified, they are auto generated and can cause conflicts. Please refer to our documentation. Requested index: { v: 2, key: { phone: 1 }, name: "phone_1" }, existing index: { v: 2, unique: true, key: { phone: 1 }, name: "phone_1", sparse: true }', 'code': 86, 'codeName': 'IndexKeySpecsConflict', '$clusterTime': {'clusterTime': Timestamp(1757014218, 27), 'signature': {'hash': b'\xd8:<\xc7\x95wQZ\xad\xd7S\xe5\x82\xbf\xd7\xb3sU\xa1\xa2', 'keyId': 7485996588108611635}}, 'operationTime': Timestamp(1757014218, 27)}
+2025-09-05 01:00:19,085 - main - INFO - Database connection established
+2025-09-05 01:05:14,421 - main - INFO - Starting up DocTalk AI backend...
+2025-09-05 01:05:15,528 - database.mongodb - INFO - Connected to MongoDB: doctalk_ai
+2025-09-05 01:05:16,191 - database.mongodb - ERROR - Error creating indexes: An existing index has the same name as the requested index. When index names are not specified, they are auto generated and can cause conflicts. Please refer to our documentation. Requested index: { v: 2, key: { phone: 1 }, name: "phone_1" }, existing index: { v: 2, unique: true, key: { phone: 1 }, name: "phone_1", sparse: true }, full error: {'ok': 0.0, 'errmsg': 'An existing index has the same name as the requested index. When index names are not specified, they are auto generated and can cause conflicts. Please refer to our documentation. Requested index: { v: 2, key: { phone: 1 }, name: "phone_1" }, existing index: { v: 2, unique: true, key: { phone: 1 }, name: "phone_1", sparse: true }', 'code': 86, 'codeName': 'IndexKeySpecsConflict', '$clusterTime': {'clusterTime': Timestamp(1757014515, 24), 'signature': {'hash': b'b2F\xe5\xb5\x01bYfo\x12H\xe5\x13E>\xd0\x13\x13\xba', 'keyId': 7485996588108611635}}, 'operationTime': Timestamp(1757014515, 24)}
+2025-09-05 01:05:16,192 - main - INFO - Database connection established
+2025-09-05 01:06:03,502 - main - INFO - Shutting down DocTalk AI backend...
+2025-09-05 01:06:03,557 - database.mongodb - INFO - Disconnected from MongoDB
+2025-09-05 01:06:03,557 - main - INFO - Database connection closed
+2025-09-05 01:06:48,033 - main - INFO - Starting up DocTalk AI backend...
+2025-09-05 01:06:49,147 - database.mongodb - INFO - Connected to MongoDB: doctalk_ai
+2025-09-05 01:06:49,719 - database.mongodb - ERROR - Error creating indexes: An existing index has the same name as the requested index. When index names are not specified, they are auto generated and can cause conflicts. Please refer to our documentation. Requested index: { v: 2, key: { phone: 1 }, name: "phone_1" }, existing index: { v: 2, unique: true, key: { phone: 1 }, name: "phone_1", sparse: true }, full error: {'ok': 0.0, 'errmsg': 'An existing index has the same name as the requested index. When index names are not specified, they are auto generated and can cause conflicts. Please refer to our documentation. Requested index: { v: 2, key: { phone: 1 }, name: "phone_1" }, existing index: { v: 2, unique: true, key: { phone: 1 }, name: "phone_1", sparse: true }', 'code': 86, 'codeName': 'IndexKeySpecsConflict', '$clusterTime': {'clusterTime': Timestamp(1757014609, 3), 'signature': {'hash': b'\xaeJ\x14\xb3\xed\xbd/\x8f\x13\xdf\xb8\xa6\xa7\xaa}2\xf5\xb8\xceN', 'keyId': 7485996588108611635}}, 'operationTime': Timestamp(1757014609, 3)}
+2025-09-05 01:06:49,719 - main - INFO - Database connection established
+2025-09-05 01:08:24,742 - main - INFO - Shutting down DocTalk AI backend...
+2025-09-05 01:08:25,013 - database.mongodb - INFO - Disconnected from MongoDB
+2025-09-05 01:08:25,014 - main - INFO - Database connection closed
+2025-09-05 01:08:29,431 - main - INFO - Starting up DocTalk AI backend...
+2025-09-05 01:08:30,931 - database.mongodb - INFO - Connected to MongoDB: doctalk_ai
+2025-09-05 01:08:32,647 - database.mongodb - ERROR - Error creating indexes: An existing index has the same name as the requested index. When index names are not specified, they are auto generated and can cause conflicts. Please refer to our documentation. Requested index: { v: 2, key: { phone: 1 }, name: "phone_1" }, existing index: { v: 2, unique: true, key: { phone: 1 }, name: "phone_1", sparse: true }, full error: {'ok': 0.0, 'errmsg': 'An existing index has the same name as the requested index. When index names are not specified, they are auto generated and can cause conflicts. Please refer to our documentation. Requested index: { v: 2, key: { phone: 1 }, name: "phone_1" }, existing index: { v: 2, unique: true, key: { phone: 1 }, name: "phone_1", sparse: true }', 'code': 86, 'codeName': 'IndexKeySpecsConflict', '$clusterTime': {'clusterTime': Timestamp(1757014711, 36), 'signature': {'hash': b'\x8a\x1b/\xd2j\xe3\xdd\xbc\xc8\x05\xec~\xc7\n4\xaai\xee{\x13', 'keyId': 7485996588108611635}}, 'operationTime': Timestamp(1757014711, 36)}
+2025-09-05 01:08:32,650 - main - INFO - Database connection established
+2025-09-05 01:09:09,474 - main - INFO - Shutting down DocTalk AI backend...
+2025-09-05 01:09:09,565 - database.mongodb - INFO - Disconnected from MongoDB
+2025-09-05 01:09:09,566 - main - INFO - Database connection closed
+2025-09-05 01:09:16,088 - main - INFO - Starting up DocTalk AI backend...
+2025-09-05 01:09:16,927 - database.mongodb - INFO - Connected to MongoDB: doctalk_ai
+2025-09-05 01:09:17,563 - database.mongodb - ERROR - Error creating indexes: An existing index has the same name as the requested index. When index names are not specified, they are auto generated and can cause conflicts. Please refer to our documentation. Requested index: { v: 2, key: { phone: 1 }, name: "phone_1" }, existing index: { v: 2, unique: true, key: { phone: 1 }, name: "phone_1", sparse: true }, full error: {'ok': 0.0, 'errmsg': 'An existing index has the same name as the requested index. When index names are not specified, they are auto generated and can cause conflicts. Please refer to our documentation. Requested index: { v: 2, key: { phone: 1 }, name: "phone_1" }, existing index: { v: 2, unique: true, key: { phone: 1 }, name: "phone_1", sparse: true }', 'code': 86, 'codeName': 'IndexKeySpecsConflict', '$clusterTime': {'clusterTime': Timestamp(1757014757, 5), 'signature': {'hash': b'\xb1K\xc3\x90\xc5\x93\x95\xc0\xd3\xa8\x92\xd6\xfa\xce\xc6p\xfe\xddx\xd4', 'keyId': 7485996588108611635}}, 'operationTime': Timestamp(1757014757, 5)}
+2025-09-05 01:09:17,564 - main - INFO - Database connection established
+2025-09-05 01:09:40,641 - main - INFO - Shutting down DocTalk AI backend...
+2025-09-05 01:09:40,708 - database.mongodb - INFO - Disconnected from MongoDB
+2025-09-05 01:09:40,709 - main - INFO - Database connection closed
+2025-09-05 01:11:57,137 - main - INFO - Starting up DocTalk AI backend...
+2025-09-05 01:11:58,273 - database.mongodb - INFO - Connected to MongoDB: doctalk_ai
+2025-09-05 01:11:59,096 - database.mongodb - ERROR - Error creating indexes: An existing index has the same name as the requested index. When index names are not specified, they are auto generated and can cause conflicts. Please refer to our documentation. Requested index: { v: 2, key: { phone: 1 }, name: "phone_1" }, existing index: { v: 2, unique: true, key: { phone: 1 }, name: "phone_1", sparse: true }, full error: {'ok': 0.0, 'errmsg': 'An existing index has the same name as the requested index. When index names are not specified, they are auto generated and can cause conflicts. Please refer to our documentation. Requested index: { v: 2, key: { phone: 1 }, name: "phone_1" }, existing index: { v: 2, unique: true, key: { phone: 1 }, name: "phone_1", sparse: true }', 'code': 86, 'codeName': 'IndexKeySpecsConflict', '$clusterTime': {'clusterTime': Timestamp(1757014918, 24), 'signature': {'hash': b'0\xa3\xa86\xd2?\x1a\x00\xa9][\x1e\x95\n\xa9\x10\n\xd6\x9f;', 'keyId': 7485996588108611635}}, 'operationTime': Timestamp(1757014918, 24)}
+2025-09-05 01:11:59,096 - main - INFO - Database connection established
+2025-09-05 01:12:06,545 - services.appointment_service - ERROR - Error getting appointment: 'statistics' is not a valid ObjectId, it must be a 12-byte input or a 24-character hex string
+2025-09-05 01:12:06,546 - api.appointments - ERROR - Error getting appointment: 'statistics' is not a valid ObjectId, it must be a 12-byte input or a 24-character hex string
+2025-09-05 01:12:06,548 - services.appointment_service - ERROR - Error getting appointment: 'statistics' is not a valid ObjectId, it must be a 12-byte input or a 24-character hex string
+2025-09-05 01:12:06,548 - api.appointments - ERROR - Error getting appointment: 'statistics' is not a valid ObjectId, it must be a 12-byte input or a 24-character hex string
+2025-09-05 01:13:55,129 - main - INFO - Shutting down DocTalk AI backend...
+2025-09-05 01:13:55,194 - database.mongodb - INFO - Disconnected from MongoDB
+2025-09-05 01:13:55,195 - main - INFO - Database connection closed
+2025-09-05 01:19:33,663 - main - INFO - Starting up DocTalk AI backend...
+2025-09-05 01:19:34,647 - database.mongodb - INFO - Connected to MongoDB: doctalk_ai
+2025-09-05 01:19:35,503 - database.mongodb - ERROR - Error creating indexes: An existing index has the same name as the requested index. When index names are not specified, they are auto generated and can cause conflicts. Please refer to our documentation. Requested index: { v: 2, key: { phone: 1 }, name: "phone_1" }, existing index: { v: 2, unique: true, key: { phone: 1 }, name: "phone_1", sparse: true }, full error: {'ok': 0.0, 'errmsg': 'An existing index has the same name as the requested index. When index names are not specified, they are auto generated and can cause conflicts. Please refer to our documentation. Requested index: { v: 2, key: { phone: 1 }, name: "phone_1" }, existing index: { v: 2, unique: true, key: { phone: 1 }, name: "phone_1", sparse: true }', 'code': 86, 'codeName': 'IndexKeySpecsConflict', '$clusterTime': {'clusterTime': Timestamp(1757015374, 36), 'signature': {'hash': b'\xc1E\x02bW\x86\x11\xba\x17\x0c\xc1\xf5s\x81d\xf3\xf8\xaa\x9c\xca', 'keyId': 7485996588108611635}}, 'operationTime': Timestamp(1757015374, 36)}
+2025-09-05 01:19:35,504 - main - INFO - Database connection established
+2025-09-05 01:19:47,804 - main - INFO - Shutting down DocTalk AI backend...
+2025-09-05 01:19:47,882 - database.mongodb - INFO - Disconnected from MongoDB
+2025-09-05 01:19:47,882 - main - INFO - Database connection closed
+2025-09-05 01:19:50,659 - main - INFO - Starting up DocTalk AI backend...
+2025-09-05 01:19:51,502 - database.mongodb - INFO - Connected to MongoDB: doctalk_ai
+2025-09-05 01:19:52,083 - database.mongodb - ERROR - Error creating indexes: An existing index has the same name as the requested index. When index names are not specified, they are auto generated and can cause conflicts. Please refer to our documentation. Requested index: { v: 2, key: { phone: 1 }, name: "phone_1" }, existing index: { v: 2, unique: true, key: { phone: 1 }, name: "phone_1", sparse: true }, full error: {'ok': 0.0, 'errmsg': 'An existing index has the same name as the requested index. When index names are not specified, they are auto generated and can cause conflicts. Please refer to our documentation. Requested index: { v: 2, key: { phone: 1 }, name: "phone_1" }, existing index: { v: 2, unique: true, key: { phone: 1 }, name: "phone_1", sparse: true }', 'code': 86, 'codeName': 'IndexKeySpecsConflict', '$clusterTime': {'clusterTime': Timestamp(1757015391, 25), 'signature': {'hash': b'6|\xa3\xb5\x14\xa0$}\x98m\x08yf\x865=\xda\xf1\x95\xef', 'keyId': 7485996588108611635}}, 'operationTime': Timestamp(1757015391, 25)}
+2025-09-05 01:19:52,084 - main - INFO - Database connection established
+2025-09-05 01:20:02,507 - main - INFO - Shutting down DocTalk AI backend...
+2025-09-05 01:20:02,580 - database.mongodb - INFO - Disconnected from MongoDB
+2025-09-05 01:20:02,580 - main - INFO - Database connection closed
+2025-09-05 01:20:05,355 - main - INFO - Starting up DocTalk AI backend...
+2025-09-05 01:20:06,141 - database.mongodb - INFO - Connected to MongoDB: doctalk_ai
+2025-09-05 01:20:06,549 - database.mongodb - WARNING - Could not create doctors indexes: Index build failed: 29c45346-1d64-4fa3-a65a-4e80061b213f: Collection doctalk_ai.doctors ( 7a303956-e6bd-438e-b2d2-841425f360ff ) :: caused by :: E11000 duplicate key error collection: doctalk_ai.doctors index: idx_doctor_id_unique dup key: { doctor_id: null }, full error: {'ok': 0.0, 'errmsg': 'Index build failed: 29c45346-1d64-4fa3-a65a-4e80061b213f: Collection doctalk_ai.doctors ( 7a303956-e6bd-438e-b2d2-841425f360ff ) :: caused by :: E11000 duplicate key error collection: doctalk_ai.doctors index: idx_doctor_id_unique dup key: { doctor_id: null }', 'code': 11000, 'codeName': 'DuplicateKey', 'keyPattern': {'doctor_id': 1}, 'keyValue': {'doctor_id': None}, '$clusterTime': {'clusterTime': Timestamp(1757015406, 6), 'signature': {'hash': b'\x8e\xb1\xf0\xe5Q\x1eXq\x86/_\x038\xd7\xd6q\xcdR:<', 'keyId': 7485996588108611635}}, 'operationTime': Timestamp(1757015406, 6)}
+2025-09-05 01:20:06,549 - database.mongodb - INFO - Database indexes created/verified successfully
+2025-09-05 01:20:06,550 - main - INFO - Database connection established
+2025-09-05 01:29:20,489 - main - INFO - Shutting down DocTalk AI backend...
+2025-09-05 01:29:20,572 - database.mongodb - INFO - Disconnected from MongoDB
+2025-09-05 01:29:20,573 - main - INFO - Database connection closed
+2025-09-05 01:29:28,312 - main - INFO - Starting up DocTalk AI backend...
+2025-09-05 01:29:29,269 - database.mongodb - INFO - Connected to MongoDB: doctalk_ai
+2025-09-05 01:29:29,640 - database.mongodb - WARNING - Could not create doctors indexes: Index build failed: 8d3a7b6c-506a-4e12-86ce-06dce6dcfd0e: Collection doctalk_ai.doctors ( 7a303956-e6bd-438e-b2d2-841425f360ff ) :: caused by :: E11000 duplicate key error collection: doctalk_ai.doctors index: idx_doctor_id_unique dup key: { doctor_id: null }, full error: {'ok': 0.0, 'errmsg': 'Index build failed: 8d3a7b6c-506a-4e12-86ce-06dce6dcfd0e: Collection doctalk_ai.doctors ( 7a303956-e6bd-438e-b2d2-841425f360ff ) :: caused by :: E11000 duplicate key error collection: doctalk_ai.doctors index: idx_doctor_id_unique dup key: { doctor_id: null }', 'code': 11000, 'codeName': 'DuplicateKey', 'keyPattern': {'doctor_id': 1}, 'keyValue': {'doctor_id': None}, '$clusterTime': {'clusterTime': Timestamp(1757015969, 12), 'signature': {'hash': b'K\xf1H\xf2\x8f\xcfg\xc8\xbe/\xdfZ\xa0i\xfb\x9d\x028A\x91', 'keyId': 7485996588108611635}}, 'operationTime': Timestamp(1757015969, 12)}
+2025-09-05 01:29:29,641 - database.mongodb - INFO - Database indexes created/verified successfully
+2025-09-05 01:29:29,641 - main - INFO - Database connection established
+2025-09-05 01:29:43,690 - main - INFO - Shutting down DocTalk AI backend...
+2025-09-05 01:29:43,768 - database.mongodb - INFO - Disconnected from MongoDB
+2025-09-05 01:29:43,768 - main - INFO - Database connection closed
+2025-09-05 01:30:14,520 - main - INFO - Starting up DocTalk AI backend...
+2025-09-05 01:30:15,491 - database.mongodb - INFO - Connected to MongoDB: doctalk_ai
+2025-09-05 01:30:15,889 - database.mongodb - WARNING - Could not create doctors indexes: Index build failed: dfa2c2a5-7700-4965-ae23-83bdf338c2fd: Collection doctalk_ai.doctors ( 7a303956-e6bd-438e-b2d2-841425f360ff ) :: caused by :: E11000 duplicate key error collection: doctalk_ai.doctors index: idx_doctor_id_unique dup key: { doctor_id: null }, full error: {'ok': 0.0, 'errmsg': 'Index build failed: dfa2c2a5-7700-4965-ae23-83bdf338c2fd: Collection doctalk_ai.doctors ( 7a303956-e6bd-438e-b2d2-841425f360ff ) :: caused by :: E11000 duplicate key error collection: doctalk_ai.doctors index: idx_doctor_id_unique dup key: { doctor_id: null }', 'code': 11000, 'codeName': 'DuplicateKey', 'keyPattern': {'doctor_id': 1}, 'keyValue': {'doctor_id': None}, '$clusterTime': {'clusterTime': Timestamp(1757016015, 13), 'signature': {'hash': b'\xa7k\xd4\xb5\x8e\xd0\x1e\xdd\x10\xeb\x91H\x9em8\xa5\xaam\xa4t', 'keyId': 7485996588108611635}}, 'operationTime': Timestamp(1757016015, 13)}
+2025-09-05 01:30:15,892 - database.mongodb - INFO - Database indexes created/verified successfully
+2025-09-05 01:30:15,893 - main - INFO - Database connection established
+2025-09-05 01:34:33,085 - main - INFO - Shutting down DocTalk AI backend...
+2025-09-05 01:34:33,157 - database.mongodb - INFO - Disconnected from MongoDB
+2025-09-05 01:34:33,157 - main - INFO - Database connection closed
+2025-09-05 01:34:37,375 - main - INFO - Starting up DocTalk AI backend...
+2025-09-05 01:34:38,274 - database.mongodb - INFO - Connected to MongoDB: doctalk_ai
+2025-09-05 01:34:38,668 - database.mongodb - WARNING - Could not create doctors indexes: Index build failed: b9f780e8-e874-4cfc-a821-e6b6baf2edcf: Collection doctalk_ai.doctors ( 7a303956-e6bd-438e-b2d2-841425f360ff ) :: caused by :: E11000 duplicate key error collection: doctalk_ai.doctors index: idx_doctor_id_unique dup key: { doctor_id: null }, full error: {'ok': 0.0, 'errmsg': 'Index build failed: b9f780e8-e874-4cfc-a821-e6b6baf2edcf: Collection doctalk_ai.doctors ( 7a303956-e6bd-438e-b2d2-841425f360ff ) :: caused by :: E11000 duplicate key error collection: doctalk_ai.doctors index: idx_doctor_id_unique dup key: { doctor_id: null }', 'code': 11000, 'codeName': 'DuplicateKey', 'keyPattern': {'doctor_id': 1}, 'keyValue': {'doctor_id': None}, '$clusterTime': {'clusterTime': Timestamp(1757016278, 9), 'signature': {'hash': b"H\xc1\x8bz\xb6\xda\t'\x1d\xe7Rc\x8f\xe5\xbc#\xbf\xb7x*", 'keyId': 7485996588108611635}}, 'operationTime': Timestamp(1757016278, 9)}
+2025-09-05 01:34:38,671 - database.mongodb - INFO - Database indexes created/verified successfully
+2025-09-05 01:34:38,671 - main - INFO - Database connection established
+2025-09-05 01:34:56,706 - main - INFO - Shutting down DocTalk AI backend...
+2025-09-05 01:34:56,772 - database.mongodb - INFO - Disconnected from MongoDB
+2025-09-05 01:34:56,772 - main - INFO - Database connection closed
+2025-09-05 01:35:00,342 - main - INFO - Starting up DocTalk AI backend...
+2025-09-05 01:35:01,135 - database.mongodb - INFO - Connected to MongoDB: doctalk_ai
+2025-09-05 01:35:01,546 - database.mongodb - WARNING - Could not create doctors indexes: Index build failed: b66a2e6f-0e08-4897-829d-71b7413ca16a: Collection doctalk_ai.doctors ( 7a303956-e6bd-438e-b2d2-841425f360ff ) :: caused by :: E11000 duplicate key error collection: doctalk_ai.doctors index: idx_doctor_id_unique dup key: { doctor_id: null }, full error: {'ok': 0.0, 'errmsg': 'Index build failed: b66a2e6f-0e08-4897-829d-71b7413ca16a: Collection doctalk_ai.doctors ( 7a303956-e6bd-438e-b2d2-841425f360ff ) :: caused by :: E11000 duplicate key error collection: doctalk_ai.doctors index: idx_doctor_id_unique dup key: { doctor_id: null }', 'code': 11000, 'codeName': 'DuplicateKey', 'keyPattern': {'doctor_id': 1}, 'keyValue': {'doctor_id': None}, '$clusterTime': {'clusterTime': Timestamp(1757016300, 55), 'signature': {'hash': b'\xb4\xb2\x85\xab\xd7$R%a\xd9\xc8\xc3K\xde\xeb\xaf:I\xa4\xc0', 'keyId': 7485996588108611635}}, 'operationTime': Timestamp(1757016300, 55)}
+2025-09-05 01:35:01,547 - database.mongodb - INFO - Database indexes created/verified successfully
+2025-09-05 01:35:01,547 - main - INFO - Database connection established
+2025-09-05 01:35:04,846 - main - INFO - Shutting down DocTalk AI backend...
+2025-09-05 01:35:04,913 - database.mongodb - INFO - Disconnected from MongoDB
+2025-09-05 01:35:04,914 - main - INFO - Database connection closed
+2025-09-05 01:35:52,285 - main - INFO - Starting up DocTalk AI backend...
+2025-09-05 01:35:53,253 - database.mongodb - INFO - Connected to MongoDB: doctalk_ai
+2025-09-05 01:35:53,654 - database.mongodb - WARNING - Could not create doctors indexes: Index build failed: 7147363c-7950-4927-b43e-d574c0a1b1a6: Collection doctalk_ai.doctors ( 7a303956-e6bd-438e-b2d2-841425f360ff ) :: caused by :: E11000 duplicate key error collection: doctalk_ai.doctors index: idx_doctor_id_unique dup key: { doctor_id: null }, full error: {'ok': 0.0, 'errmsg': 'Index build failed: 7147363c-7950-4927-b43e-d574c0a1b1a6: Collection doctalk_ai.doctors ( 7a303956-e6bd-438e-b2d2-841425f360ff ) :: caused by :: E11000 duplicate key error collection: doctalk_ai.doctors index: idx_doctor_id_unique dup key: { doctor_id: null }', 'code': 11000, 'codeName': 'DuplicateKey', 'keyPattern': {'doctor_id': 1}, 'keyValue': {'doctor_id': None}, '$clusterTime': {'clusterTime': Timestamp(1757016353, 7), 'signature': {'hash': b'G\x7f\xf7\xbe\xd8?\xe6\xde\x93u\x83H\r\xca\x1b#\xef\x88J3', 'keyId': 7485996588108611635}}, 'operationTime': Timestamp(1757016353, 7)}
+2025-09-05 01:35:53,654 - database.mongodb - INFO - Database indexes created/verified successfully
+2025-09-05 01:35:53,655 - main - INFO - Database connection established
+2025-09-05 01:35:56,971 - main - INFO - Shutting down DocTalk AI backend...
+2025-09-05 01:35:57,034 - database.mongodb - INFO - Disconnected from MongoDB
+2025-09-05 01:35:57,034 - main - INFO - Database connection closed
+2025-09-05 01:46:30,806 - main - INFO - Starting up DocTalk AI backend...
+2025-09-05 01:46:31,862 - database.mongodb - INFO - Connected to MongoDB: doctalk_ai
+2025-09-05 01:46:32,239 - database.mongodb - WARNING - Could not create doctors indexes: Index build failed: 5dbe9aed-fb6f-45b5-88a7-22e5d92d9250: Collection doctalk_ai.doctors ( 7a303956-e6bd-438e-b2d2-841425f360ff ) :: caused by :: E11000 duplicate key error collection: doctalk_ai.doctors index: idx_doctor_id_unique dup key: { doctor_id: null }, full error: {'ok': 0.0, 'errmsg': 'Index build failed: 5dbe9aed-fb6f-45b5-88a7-22e5d92d9250: Collection doctalk_ai.doctors ( 7a303956-e6bd-438e-b2d2-841425f360ff ) :: caused by :: E11000 duplicate key error collection: doctalk_ai.doctors index: idx_doctor_id_unique dup key: { doctor_id: null }', 'code': 11000, 'codeName': 'DuplicateKey', 'keyPattern': {'doctor_id': 1}, 'keyValue': {'doctor_id': None}, '$clusterTime': {'clusterTime': Timestamp(1757016991, 30), 'signature': {'hash': b'\xf6\xfc\xe5\x023({\x1a\xe9\xccQ\xd3\x04\xf2>\xdf\xb0\x8fJ\xfb', 'keyId': 7485996588108611635}}, 'operationTime': Timestamp(1757016991, 30)}
+2025-09-05 01:46:32,242 - database.mongodb - INFO - Database indexes created/verified successfully
+2025-09-05 01:46:32,244 - main - INFO - Database connection established
+2025-09-05 01:48:10,626 - main - INFO - Shutting down DocTalk AI backend...
+2025-09-05 01:48:10,693 - database.mongodb - INFO - Disconnected from MongoDB
+2025-09-05 01:48:10,694 - main - INFO - Database connection closed
+2025-09-05 01:53:48,404 - main - INFO - Starting up DocTalk AI backend...
+2025-09-05 01:53:49,411 - database.mongodb - INFO - Connected to MongoDB: doctalk_ai
+2025-09-05 01:53:49,798 - database.mongodb - WARNING - Could not create doctors indexes: Index build failed: b8b51730-fb59-48db-943b-07876d989cb4: Collection doctalk_ai.doctors ( 7a303956-e6bd-438e-b2d2-841425f360ff ) :: caused by :: E11000 duplicate key error collection: doctalk_ai.doctors index: idx_doctor_id_unique dup key: { doctor_id: null }, full error: {'ok': 0.0, 'errmsg': 'Index build failed: b8b51730-fb59-48db-943b-07876d989cb4: Collection doctalk_ai.doctors ( 7a303956-e6bd-438e-b2d2-841425f360ff ) :: caused by :: E11000 duplicate key error collection: doctalk_ai.doctors index: idx_doctor_id_unique dup key: { doctor_id: null }', 'code': 11000, 'codeName': 'DuplicateKey', 'keyPattern': {'doctor_id': 1}, 'keyValue': {'doctor_id': None}, '$clusterTime': {'clusterTime': Timestamp(1757017429, 12), 'signature': {'hash': b'\xbf\xe5]\xe5\xb4f!>\xcfN\xe1e\xc1@\xcb\x1a\x1f\x90\x89\x9c', 'keyId': 7485996588108611635}}, 'operationTime': Timestamp(1757017429, 12)}
+2025-09-05 01:53:49,801 - database.mongodb - INFO - Database indexes created/verified successfully
+2025-09-05 01:53:49,802 - main - INFO - Database connection established
+2025-09-05 01:54:19,328 - services.voice_service - INFO - Transcription confidence: 0.998618
+2025-09-05 01:54:19,329 - services.voice_service - INFO - Transcribed: I need to schedule an appointment.
+2025-09-05 01:54:20,295 - services.voice_service - ERROR - Gemini response error: 400 API key not valid. Please pass a valid API key. [reason: "API_KEY_INVALID"
+domain: "googleapis.com"
+metadata {
+  key: "service"
+  value: "generativelanguage.googleapis.com"
+}
+, locale: "en-US"
+message: "API key not valid. Please pass a valid API key."
+]
+2025-09-05 01:54:20,297 - services.voice_service - ERROR - Voice processing error: AI response generation failed: 400 API key not valid. Please pass a valid API key. [reason: "API_KEY_INVALID"
+domain: "googleapis.com"
+metadata {
+  key: "service"
+  value: "generativelanguage.googleapis.com"
+}
+, locale: "en-US"
+message: "API key not valid. Please pass a valid API key."
+]
+2025-09-05 01:55:13,696 - api.voice - INFO - WebSocket client disconnected
+2025-09-05 01:56:28,560 - main - INFO - Shutting down DocTalk AI backend...
+2025-09-05 01:56:28,624 - database.mongodb - INFO - Disconnected from MongoDB
+2025-09-05 01:56:28,624 - main - INFO - Database connection closed

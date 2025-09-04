@@ -31,7 +31,21 @@ class Settings(BaseSettings):
     def cors_origins(self) -> List[str]:
         return [origin.strip() for origin in self.allowed_origins.split(",")]
     
+    def validate_api_keys(self) -> None:
+        """Validate that required API keys are present"""
+        missing_keys = []
+        
+        if not self.deepgram_api_key:
+            missing_keys.append("DEEPGRAM_API_KEY")
+        if not self.gemini_api_key:
+            missing_keys.append("GEMINI_API_KEY")
+        if not self.elevenlabs_api_key:
+            missing_keys.append("ELEVENLABS_API_KEY")
+        
+        if missing_keys:
+            raise ValueError(f"Missing required API keys: {', '.join(missing_keys)}")
+    
     class Config:
         env_file = ".env"
 
-settings = Settings() 
+settings = Settings()
